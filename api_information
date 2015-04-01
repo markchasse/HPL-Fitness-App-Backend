@@ -1,0 +1,38 @@
+login api
+
+request_type : post
+url : http://localhost:8000/accounts/login/
+parameters : email,password
+
+
+register api
+
+request_type : post
+url : http://localhost:8000/accounts/register/
+parameters : first_name,last_name,email,password,profile_image
+
+
+password forget api
+
+request_type : post
+url : http://localhost:8000/accounts/forget_password/
+parameter : email
+
+reset password api
+
+request_type: post
+Authorization: token
+url : http://localhost:8000/accounts/reset_password/
+parameter   : reset_code,password
+
+change password api
+
+request_type: post
+Authorization: token
+url : http://localhost:8000/accounts/password/change/
+parameter   : old_password,new_password
+
+delete account api
+request_type: post
+Authorization: token
+url : http://localhost:8000/accounts/delete_account/
