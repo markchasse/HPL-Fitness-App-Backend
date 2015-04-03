@@ -10,6 +10,7 @@ from rest_framework import status
 from django.core.mail import send_mail,EmailMultiAlternatives
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth import get_user_model
+from accounts.forms import LoginForm
 from models import User,PasswordResetRequest
 
 from FitnessApp.utils import SUCCESS_DICT, ERROR_DICT
@@ -17,7 +18,7 @@ from accounts.serializers import UserSerializer
 from accounts.models import AppUser, WorkOutSubscription, AppStudent
 from accounts.models import my_random_string
 
-from accounts.forms import LoginForm
+# from accounts.forms import LoginForm
 logger = logging.getLogger(__name__)
 # Create your views here.
 

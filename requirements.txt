@@ -1,3 +1,5 @@
+psycopg2==2.6
+requests==2.5.0
 Django==1.7.7
 django-appconf==1.0.1
 django-user-accounts==1.0.1

@@ -1,7 +1,5 @@
-__author__ = 'imrantufail'
-
 from django.conf.urls import patterns, url
-from accounts.views import Register, TokenLogin,DeleteAccount,ChangePassword,ForgetPasswordEmail,ResetPassword
+from accounts.views import Register, TokenLogin,DeleteAccount,ChangePassword,ForgetPasswordEmail, ResetPassword
 
 urlpatterns = patterns('',
     url(r'^register/$', Register.as_view(), name='register_user'),

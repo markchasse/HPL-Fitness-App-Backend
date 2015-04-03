@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -17,7 +18,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '-)deulo42i3cf7j$esd-hfl-8o_j-&f8)-m_455s_h#0-7titf'
+SECRET_KEY ='-)deulo42i3cf7j$esd-hfl-8o_j-&f8)-m_455s_h#0-7titf'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -86,6 +87,7 @@ INSTALLED_APPS = (
     'accounts',
     'api',
     'rest_framework',
+
     'rest_framework.authtoken'
 )
 
@@ -124,7 +126,7 @@ DATABASES = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Los_Angeles'
 
 USE_I18N = True
 
@@ -214,8 +216,3 @@ LOGGING = {
         },
     },
 }
-
-try:
-    from local_settings import *
-except ImportError:
-    pass

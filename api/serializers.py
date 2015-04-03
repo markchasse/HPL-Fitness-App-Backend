@@ -1,29 +1,51 @@
 from rest_framework import serializers
-from accounts.models import AppUser, DefinedWorkOut, WorkOutResult, WorkOutSubscription,AssignedWorkOut
-from rest_framework.renderers import JSONRenderer
-from rest_framework.parsers import JSONParser
+from accounts.models import AppUser,AppStudent, WorkOutDefinition, WorkOutResult, WorkOutSubscription, \
+    AssignedWorkOut, \
+    WorkOutType
 
 
-class WorkOutResultSerializer(serializers.ModelSerializer):
+class WorkTypeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = WorkOutResult
-        fields =('work_out_time', 'work_out_rounds')
-
-
-class WorkOutSubsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WorkOutSubscription
-        fields =('sub_choices',)
+        model = WorkOutType
+        fields = ('workout_type',)
 
 
 class AssignedWorkOutSerializer(serializers.ModelSerializer):
+    defined_work_out_id = "DefinedWorkOutSerializers(read_only=True)"
     class Meta:
         model = AssignedWorkOut
-        fields = ('student_assigned_workout', 'defined_work_out_id',  'assigned_date')
+        fields = ('student_assigned_workout', 'defined_work_out_id',  'assigned_date',)
 
+
+class DefinedWorkOutSerializers(serializers.ModelSerializer):
+    workout_type = WorkTypeSerializer(read_only=True)
+
+    class Meta:
+        model = WorkOutDefinition
+        fields = ('workout_type', 'defined_work_out_text', 'defined_work_out_title', 'workout_image_caption', )
 
 
 class LoginSerializers(serializers.ModelSerializer):
     class Meta:
         model = AppUser
         fields = ('first_name', 'last_name','email')
+
+class StudentSerializer(serializers.ModelSerializer):
+    app_user =  LoginSerializers(read_only=True)
+    class Meta:
+        model = AppStudent
+        fields = ('app_user.first_name',)
+
+class SubscriptionSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = WorkOutSubscription
+        fields = ('subscription_choices',)
+
+
+class WorkOutResultSerializer(serializers.ModelSerializer):
+    workout_assigned = AssignedWorkOutSerializer(read_only=True)
+    # student_info = StudentSerializer(read_only=True)
+
+    class Meta:
+        model = WorkOutResult
+        fields =('student_result', 'workout_assigned', 'work_out_time', 'work_out_rounds')

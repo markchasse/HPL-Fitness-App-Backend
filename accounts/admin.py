@@ -1,10 +1,6 @@
 from django.contrib import admin
-from django.contrib.auth import get_user_model
-from django.contrib.auth.admin import UserAdmin
 
-from accounts.models import AppCoach, AppUser, DefinedWorkOut, AssignedWorkOut
-from accounts.admin_forms import UserCreationForm
-# Register your models here.
+from accounts.models import AppUser,WorkOutDefinition, AssignedWorkOut, AppCoach, WorkOutType
 
 
 class childinline(admin.TabularInline):
@@ -12,7 +8,6 @@ class childinline(admin.TabularInline):
 
 
 class CoachAdmin(admin.ModelAdmin):
-    # fields = ['email', 'first_name', 'last_name' ]
     fieldsets = (
         ('App User', {
          'fields': ('email', 'first_name', 'password')}),
@@ -22,20 +17,27 @@ class CoachAdmin(admin.ModelAdmin):
 
 
 class WorkOutAdmin(admin.ModelAdmin):
-    # fields = ['defined_work_out', 'defined_work_out_title', 'coach_defined_workout' ]
     fieldsets = (
-        ('Workouts', {
-         'fields': ('defined_work_out', 'defined_work_out_title', 'coach_defined_workout')}),
+        ('WorkoutsDefinitions', {
+         'fields': ('defined_work_out_title', 'defined_work_out_text', 'coach_defined_workout','work_type',)}),
+    )
+
+
+class WorkOutTypesAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ('Workout Types', {
+         'fields': ('workout_type',)}),
     )
 
 
 class AssignedWorkOutAdmin(admin.ModelAdmin):
     fieldsets = (
         ('AssignedWorkOut', {
-         'fields': ('student_assigned_workout' , 'defined_work_out_id', 'assigned_date',)}),
+         'fields': ('student_assigned_workout', 'defined_work_out_id', 'assigned_date',)}),
     )
 
 
 admin.site.register(AppUser, CoachAdmin)
-admin.site.register(DefinedWorkOut, WorkOutAdmin)
+admin.site.register(WorkOutType, WorkOutTypesAdmin)
+admin.site.register(WorkOutDefinition, WorkOutAdmin)
 admin.site.register(AssignedWorkOut, AssignedWorkOutAdmin)
