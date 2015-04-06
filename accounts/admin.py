@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from accounts.models import AppUser, AppCoach
-from WorkOuts.models import WorkOutDefinition, AssignedWorkOut, WorkOutType
+from work_outs.models import WorkOutDefinition, AssignedWorkOut, WorkOutType
 
 class childinline(admin.TabularInline):
     model = AppCoach

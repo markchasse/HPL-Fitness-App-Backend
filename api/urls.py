@@ -1,7 +1,10 @@
 from django.conf.urls import url, include,patterns
 from rest_framework import routers
+
 from api import views
+
 from api.views import SubscriptionViewSet, ResultViewSet
+
 
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'subscription', SubscriptionViewSet,  base_name='workout_subscription')

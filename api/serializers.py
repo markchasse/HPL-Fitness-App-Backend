@@ -1,12 +1,13 @@
 from rest_framework import serializers
+
 from accounts.models import AppUser,AppStudent, WorkOutSubscription
-from WorkOuts.models import WorkOutResult,WorkOutType,AssignedWorkOut, WorkOutDefinition
+from work_outs.models import WorkOutResult,WorkOutType,AssignedWorkOut, WorkOutDefinition
 
 
 class WorkTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkOutType
-        fields = ('workout_type',)
+        fields = ('id','workout_type',)
 
 
 class DefinedWorkOutSerializers(serializers.ModelSerializer):
@@ -49,7 +50,7 @@ class SubscriptionSerializers(serializers.ModelSerializer):
 
 class WorkOutResultSerializer(serializers.ModelSerializer):
     workout_id = AssignedWorkOutResult(source='assigned_workout_id_id', read_only=True)
-    student = StudentSerializer(source = 'student_id', read_only=True)
     class Meta:
         model = WorkOutResult
-        fields =('student_id','student','workout_id','workout_id', 'assigned_workout_id','work_out_time','work_out_rounds')
+        fields =('workout_id','workout_id', 'assigned_workout_id',
+                 'work_out_time','work_out_rounds')

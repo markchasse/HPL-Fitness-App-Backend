@@ -1,25 +1,20 @@
 import datetime
-from django.db.models import Q
-# from datetime import datetime
-from rest_framework import viewsets, generics
-from rest_framework.generics import ListAPIView
-from rest_framework.parsers import JSONParser
 
-from rest_framework.renderers import JSONRenderer
-from rest_framework.response import Response
+from rest_framework import viewsets
+from rest_framework.generics import ListAPIView
 
 from api.serializers import AssignedWorkOutSerializer, SubscriptionSerializers, \
     DefinedWorkOutSerializers, WorkOutResultSerializer
 from accounts.models import WorkOutSubscription
+from work_outs.models import AssignedWorkOut, WorkOutResult
 
-from WorkOuts.models import AssignedWorkOut,WorkOutResult
 
 #logged in user can check his/her subscription
 class SubscriptionViewSet(viewsets.ModelViewSet):
-     serializer_class = SubscriptionSerializers
-     queryset = WorkOutSubscription.objects.all()
+    serializer_class = SubscriptionSerializers
+    queryset = WorkOutSubscription.objects.all()
 
-     def get_queryset(self):
+    def get_queryset(self):
         queryset = super(SubscriptionViewSet, self).get_queryset()
         logged_in_user = self.request.user
         return queryset.filter(subscription_id=logged_in_user.student_user.id)
@@ -50,14 +45,13 @@ class ScheduleWorkOut(ListAPIView):
 
 
 class ResultViewSet(viewsets.ModelViewSet):
-    serializer_class =  WorkOutResultSerializer
-    queryset =  WorkOutResult.objects.all()
+    serializer_class = WorkOutResultSerializer
+    queryset = WorkOutResult.objects.all()
 
-    def get_queryset(self):
-         queryset = super(ResultViewSet, self).get_queryset()
-         logged_user = self.request.user
-         if logged_user:
-
-             query_obj = queryset.filter( student_id__id = logged_user.student_user.id,)
-
-         return query_obj
+    # def get_queryset(self):
+    #     queryset = super(ResultViewSet, self).get_queryset()
+    #     logged_user = self.request.user
+    #     if logged_user:
+    #         query_obj = queryset.filter(student_id__id=logged_user.student_user.id)
+    #
+    #     return query_obj

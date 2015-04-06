@@ -1,12 +1,14 @@
-__author__ = 'imrantufail'
+# Database
+# https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'fitness_app_db',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'FitnessAppDb',
         'USER': 'postgres',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',
+        'PASSWORD': 'postgres',
+        'HOST': '127.0.0.1',
         'PORT': '5432',
+
     }
 }
