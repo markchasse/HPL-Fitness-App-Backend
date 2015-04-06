@@ -10,8 +10,9 @@ from rest_framework.response import Response
 
 from api.serializers import AssignedWorkOutSerializer, SubscriptionSerializers, \
     DefinedWorkOutSerializers, WorkOutResultSerializer
-from accounts.models import AssignedWorkOut, WorkOutSubscription, WorkOutResult
+from accounts.models import WorkOutSubscription
 
+from WorkOuts.models import AssignedWorkOut,WorkOutResult
 
 #logged in user can check his/her subscription
 class SubscriptionViewSet(viewsets.ModelViewSet):
@@ -35,7 +36,7 @@ class AssignedWorkOutViewSet(ListAPIView):
         logged_user = self.request.user
         if logged_user:
             workout_date = datetime.datetime.strptime(workout_date, '%Y-%m-%d')
-            query_obj = queryset.filter(student_assigned_workout__id =logged_user.student_user.id,
+            query_obj = queryset.filter(student_assigned_workout__id = logged_user.student_user.id,
                                       assigned_date__year=workout_date.year,
                                       assigned_date__month=workout_date.month,
                                assigned_date__day=workout_date.day,)
@@ -57,6 +58,6 @@ class ResultViewSet(viewsets.ModelViewSet):
          logged_user = self.request.user
          if logged_user:
 
-             query_obj = queryset.filter( student_id__id = logged_user.student_user.id)
+             query_obj = queryset.filter( student_id__id = logged_user.student_user.id,)
 
          return query_obj

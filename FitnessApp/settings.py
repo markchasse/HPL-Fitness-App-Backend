@@ -84,6 +84,7 @@ INSTALLED_APPS = (
 
     'account',  # django-user-accounts
 
+    'WorkOuts',
     'accounts',
     'api',
     'rest_framework',

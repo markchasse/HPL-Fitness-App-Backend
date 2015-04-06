@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from accounts.models import AppUser,AppStudent, WorkOutDefinition, WorkOutResult, WorkOutSubscription, \
-    AssignedWorkOut, \
-    WorkOutType
+from accounts.models import AppUser,AppStudent, WorkOutSubscription
+from WorkOuts.models import WorkOutResult,WorkOutType,AssignedWorkOut, WorkOutDefinition
 
 
 class WorkTypeSerializer(serializers.ModelSerializer):
@@ -19,10 +18,10 @@ class DefinedWorkOutSerializers(serializers.ModelSerializer):
 
 class AssignedWorkOutSerializer(serializers.ModelSerializer):
     defined_work_out_id = DefinedWorkOutSerializers(read_only=True)
+
     class Meta:
         model = AssignedWorkOut
-        fields = ('student_assigned_workout', 'defined_work_out_id',  'assigned_date',)
-
+        fields = ('student_assigned_workout', 'defined_work_out_id',)
 
 class LoginSerializers(serializers.ModelSerializer):
     class Meta:
@@ -30,10 +29,17 @@ class LoginSerializers(serializers.ModelSerializer):
         fields = ('first_name', 'last_name','email')
 
 class StudentSerializer(serializers.ModelSerializer):
-    app_user =  LoginSerializers(read_only=True)
+    app_user = LoginSerializers(read_only=True)
     class Meta:
         model = AppStudent
-        fields = ('app_user.first_name',)
+        fields = ('app_user',)
+
+class AssignedWorkOutResult(serializers.ModelSerializer):
+    defined_work_out_id = DefinedWorkOutSerializers(read_only=True)
+
+    class Meta:
+        model = AssignedWorkOut
+        fields = ('defined_work_out_id',)
 
 class SubscriptionSerializers(serializers.ModelSerializer):
     class Meta:
@@ -42,9 +48,8 @@ class SubscriptionSerializers(serializers.ModelSerializer):
 
 
 class WorkOutResultSerializer(serializers.ModelSerializer):
-    workout_id = AssignedWorkOutSerializer(many=True, read_only=True)
-
+    workout_id = AssignedWorkOutResult(source='assigned_workout_id_id', read_only=True)
+    student = StudentSerializer(source = 'student_id', read_only=True)
     class Meta:
         model = WorkOutResult
-        fields =('student_id','assigned_workout_id', 'workout_id' ,'work_out_time',
-                 'work_out_rounds')
+        fields =('student_id','student','workout_id','workout_id', 'assigned_workout_id','work_out_time','work_out_rounds')

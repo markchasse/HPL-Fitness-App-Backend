@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from accounts.models import AppUser,WorkOutDefinition, AssignedWorkOut, AppCoach, WorkOutType
-
+from accounts.models import AppUser, AppCoach
+from WorkOuts.models import WorkOutDefinition, AssignedWorkOut, WorkOutType
 
 class childinline(admin.TabularInline):
     model = AppCoach
@@ -18,8 +18,8 @@ class CoachAdmin(admin.ModelAdmin):
 
 class WorkOutAdmin(admin.ModelAdmin):
     fieldsets = (
-        ('WorkoutsDefinitions', {
-         'fields': ('defined_work_out_title', 'defined_work_out_text', 'coach_defined_workout','work_type',)}),
+        ('WorkoutDefinitions', {
+         'fields': ('defined_work_out_title', 'defined_work_out_text', 'coach_defined_workout', 'workout_type',)}),
     )
 
 
