@@ -168,8 +168,8 @@ class WorkOutResult(models.Model):
     work_out_note = models.CharField(verbose_name=_('Workout Note'),null=True, blank=True, max_length=200)
     work_out_time = models.TimeField()
     work_out_rounds = models.PositiveSmallIntegerField(verbose_name=_('Workout Rounds'), null=True, max_length=10)
-    student_result = models.ForeignKey(AppStudent, related_name="app_student", blank=True, null=True)
-    workout_result = models.ForeignKey(AssignedWorkOut, related_name="app_workout", blank=True, null=True)
+    student_id = models.ForeignKey(AppStudent, related_name="app_student", blank=True, null=True)
+    assigned_workout_id = models.ForeignKey(AssignedWorkOut, related_name="app_workout", blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

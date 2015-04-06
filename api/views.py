@@ -48,7 +48,7 @@ class ScheduleWorkOut(ListAPIView):
     serializer_class = DefinedWorkOutSerializers
 
 
-class ResultViewSet(ListAPIView):
+class ResultViewSet(viewsets.ModelViewSet):
     serializer_class =  WorkOutResultSerializer
     queryset =  WorkOutResult.objects.all()
 
@@ -57,6 +57,6 @@ class ResultViewSet(ListAPIView):
          logged_user = self.request.user
          if logged_user:
 
-             query_obj = queryset.filter( student_result__id = logged_user.student_user.id)
+             query_obj = queryset.filter( student_id__id = logged_user.student_user.id)
 
          return query_obj
