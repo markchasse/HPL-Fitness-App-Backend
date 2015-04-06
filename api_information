@@ -36,3 +36,18 @@ delete account api
 request_type: post
 Authorization: token
 url : http://localhost:8000/accounts/delete_account/
+
+#logged in user can check his/her subscription
+request_type: get
+Authorization: token
+url : http://localhost:8000/api/subscription
+
+#student can get his/her workout details on a date input by the him/her
+request_type: get
+Authorization: token
+url : http:localhost:8000/api/workout/2014-09-10
+
+#student can get his/her result
+request_type: get
+Authorization: token
+url: http:localhost:8000/api/result
