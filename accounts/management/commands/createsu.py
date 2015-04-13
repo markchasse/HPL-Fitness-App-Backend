@@ -8,4 +8,4 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if not User.objects.filter(email="admin@hplfitnessapp.com").exists():
-            User.objects.create_superuser("admin", "admin@hplfitnessapp.com")
+            User.objects.create_superuser("admin@hplfitnessapp.com", "admin")
