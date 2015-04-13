@@ -1,0 +1,10 @@
+branch-defaults:
+  master:
+    environment: HPL-Fitness-App-dev
+global:
+  application_name: HPL-Fitness-App
+  default_ec2_keyname: hplfitnessapp
+  default_platform: 64bit Amazon Linux 2015.03 v1.3.0 running Python 2.7
+  default_region: us-west-2
+  profile: eb-cli
+  sc: git

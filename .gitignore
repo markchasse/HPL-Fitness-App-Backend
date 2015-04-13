@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-# Created by .ignore support plugin (hsz.mobi)
 ### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -59,8 +57,4 @@ docs/_build/
 target/
 media/
 FitnessApp/local_settings.py
-
-
-=======
-# Created by .ignore support plugin (hsz.mobi)
->>>>>>> 14e1dcda25995943aa4ad227fade8634d8bc90a3
+.idea/
