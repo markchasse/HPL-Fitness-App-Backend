@@ -58,3 +58,7 @@ target/
 media/
 FitnessApp/local_settings.py
 .idea/
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

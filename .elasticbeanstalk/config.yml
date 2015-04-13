@@ -1,6 +1,6 @@
 branch-defaults:
   master:
-    environment: HPL-Fitness-App-dev
+    environment: HPL-FitnessApp-env
 global:
   application_name: HPL-Fitness-App
   default_ec2_keyname: hplfitnessapp
