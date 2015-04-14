@@ -7,7 +7,7 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.ModelField(model_field=User._meta.get_field('email'))
-    profilepicture = serializers.SerializerMethodField('get_picture')
+    profile_image = serializers.SerializerMethodField('get_picture')
 
     def get_picture(self,obj):
         if obj.profile_image:
@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
             return None
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'password','user_role','profilepicture')
+        fields = ('id', 'email', 'first_name', 'last_name', 'password','user_role','profile_image')
         write_only_fields = ('password',)
 #         read_only_fields = ('profilepicture',)
 

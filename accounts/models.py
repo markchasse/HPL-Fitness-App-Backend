@@ -1,5 +1,3 @@
-import uuid
-
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils.translation import ugettext_lazy as _
@@ -21,13 +19,8 @@ class AuthUserManager(BaseUserManager):
             raise ValueError(
                 _('Email is required to create user'))
         email = self.normalize_email(email)
-        """
-        user = self.model(email=email, user_role=user_role, is_staff=is_staff, is_active=is_active,
-                          is_superuser=is_superuser, last_login=now,
-                          date_joined=now, **extra_fields)
-        """
-
-        user = self.model(email=email, is_staff=is_staff, is_superuser=is_superuser, user_role=user_role, last_login=now, **extra_fields)
+        user = self.model(email=email, is_staff=is_staff, is_superuser=is_superuser, user_role=user_role, last_login=now,
+                          **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -43,10 +36,11 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
 
     first_name = models.CharField(verbose_name=_("First Name"), max_length=50)
     last_name = models.CharField(verbose_name=_("First Name"), max_length=50)
-    email = models.EmailField(verbose_name=_("Email"), unique=True,max_length=255)
+    email = models.EmailField(verbose_name=_("Email"), unique=True, max_length=255)
     is_staff = models.BooleanField(verbose_name=_('staff'), default=False, null=False)
     is_active = models.BooleanField(default=True)
     profile_image = models.ImageField(upload_to=file_upload_to, blank=True, null=True)
+
     date_joined = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 
@@ -72,12 +66,7 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
 
 class AppStudent(models.Model):
     app_user = models.OneToOneField(AppUser, related_name='student_user')
-
-    subscription_id = models.ForeignKey("WorkOutSubscription", related_name='subscription_id')
-
-
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
+    subscription_id = models.ForeignKey("UserSubscription", related_name='subscription_id')
 
     def __unicode__(self):
         return str(self.app_user.first_name)
@@ -85,11 +74,10 @@ class AppStudent(models.Model):
 
 class AppCoach(models.Model):
     app_user = models.OneToOneField(AppUser, related_name='coach_user')
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return str(self.app_user.first_name)
+
 
 class PasswordResetRequest(models.Model):
     user = models.ForeignKey(AppUser)
@@ -98,37 +86,7 @@ class PasswordResetRequest(models.Model):
     is_active = models.BooleanField(default=True)
 
 
-class AppStudent(models.Model):
-    app_user = models.OneToOneField(AppUser,  related_name='student_user')
-
-    subscription_id = models.ForeignKey('WorkOutSubscription', related_name='subscription_id')
-
-
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __unicode__(self):
-        return str(self.app_user.first_name)
-
-
-# we putting this function here to resolve circular import with utils
-def my_random_string(string_length=7):
-    """Returns a random string of length string_length."""
-    flag = False
-    while flag == False:
-        random = str(uuid.uuid4()) # Convert UUID format to a Python string.
-        random = random.upper() # Make all characters uppercase.
-        random = random.replace("-","") # Remove the UUID '-'.
-        my_hash = random[0:string_length]
-        duplicate_check = PasswordResetRequest.objects.filter(hash=my_hash)
-        if not duplicate_check:
-            return my_hash
-            break;        #although code will never reach here :)
-
-
-
-
-class WorkOutSubscription(models.Model):
+class UserSubscription(models.Model):
     Free = 1
     Paid = 2
     SUB_CHOICES = (
@@ -137,7 +95,10 @@ class WorkOutSubscription(models.Model):
     )
     subscription_choices = models.PositiveSmallIntegerField(verbose_name=_("Subscription Choices"),
                                                             choices=SUB_CHOICES,
-                                                            default=Free,blank=False, null=False, max_length=10)
+                                                            default=Free, blank=False, null=False, max_length=10)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+
+    def __unicode__(self):
+        return str(self.subscription_choices)

@@ -75,6 +75,7 @@ TEMPLATE_DIRS = (
 # Application definition
 
 INSTALLED_APPS = (
+    'grappelli',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -84,13 +85,15 @@ INSTALLED_APPS = (
 
     'account',  # django-user-accounts
 
-    'work_outs',
+    'workouts',
     'accounts',
     'api',
     'rest_framework',
 
     'rest_framework.authtoken'
 )
+
+GRAPPELLI_ADMIN_TITLE = 'Fitness Admin'
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
