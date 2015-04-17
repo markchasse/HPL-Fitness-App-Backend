@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.ModelField(model_field=User._meta.get_field('email'))
     profile_image = serializers.SerializerMethodField('get_picture')
@@ -14,11 +15,12 @@ class UserSerializer(serializers.ModelSerializer):
             return obj.profile_image.url
         else:
             return None
+
     class Meta:
         model = User
         fields = ('id', 'email', 'first_name', 'last_name', 'password','user_role','profile_image')
         write_only_fields = ('password',)
-#         read_only_fields = ('profilepicture',)
+        read_only_fields = ('id', 'user_role')
 
     def create(self, validated_data):
         user = super(UserSerializer,self).create(validated_data)
