@@ -1,10 +1,12 @@
 import datetime
 
+from django.db import transaction
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, detail_route
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
-from rest_framework.views import APIView
+from rest_framework.parsers import JSONParser
 from rest_framework import mixins
 
 from api.serializers import AssignedWorkoutSerializer, SubscriptionSerializers, \
@@ -52,6 +54,7 @@ class ScheduleWorkout(ListAPIView):
 class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
     serializer_class = ExerciseResultSerializer
     queryset = ExerciseResult.objects.all()
+    parser_classes = (JSONParser,)
 
     def get_queryset(self):
         logged_in_student = self.request.user.student_user
@@ -61,33 +64,47 @@ class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, viewsets.G
             return queryset.filter(id=exercise_result_id, exercise_result_workout__student=logged_in_student)
         return []
 
-
-
     def create(self, request, **kwargs):
         logged_in_student = self.request.user.student_user
-        data = request.DATA.copy()
-        if 'exercise' in data:
-            try:
-                exercise = Exercise.objects.get(id=data['exercise'])
-            except Exercise.DoesNotExist:
-                pass
-        if 'workout' in data:
-            try:
-                workout = WorkoutDefinition.objects.get(id=data['workout'])
-            except WorkoutDefinition.DoesNotExist:
-                return Response({'detail': 'Invalid Workout id.'}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            return Response({'detail': '"workout" is a required parameter.'}, status=status.HTTP_404_NOT_FOUND)
-        assigned_workout = AssignedWorkout.objects.filter(student=logged_in_student, workout=workout)
-        if not assigned_workout:
-            return Response({'detail': 'Invalid Workout id.'}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            data['exercise_result_workout'] = assigned_workout[0].id
-        serializer = ExerciseResultSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'data': serializer.data, 'success': True}, status=status.HTTP_201_CREATED)
-        return Response({'success': False, 'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        exercise_result_objects = request.data
+        serializer_list = []
+
+        for exercise_result_key in exercise_result_objects:
+            data = exercise_result_objects[exercise_result_key]
+            if 'exercise' in data:
+                try:
+                    exercise = Exercise.objects.get(id=data['exercise'])
+                except Exercise.DoesNotExist:
+                    pass
+            if 'workout' in data:
+                try:
+                    workout = WorkoutDefinition.objects.get(id=data['workout'])
+                except WorkoutDefinition.DoesNotExist:
+                    return Response({'success': False, 'detail': 'Invalid Workout id.', 'object': exercise_result_key},
+                                    status=status.HTTP_404_NOT_FOUND)
+            else:
+                return Response({'success': False, 'detail': '"workout" is a required parameter.',
+                                 'object': exercise_result_key}, status=status.HTTP_404_NOT_FOUND)
+            assigned_workout = AssignedWorkout.objects.filter(student=logged_in_student, workout=workout)
+            if not assigned_workout:
+                return Response({'success': False, 'detail': 'Invalid Workout id.', 'object': exercise_result_key},
+                                status=status.HTTP_400_BAD_REQUEST)
+            else:
+                data['exercise_result_workout'] = assigned_workout[0].id
+            serializer = ExerciseResultSerializer(data=data)
+            if not serializer.is_valid():
+                return Response({'success': False, 'detail': serializer.errors, 'object': exercise_result_key},
+                                status=status.HTTP_400_BAD_REQUEST)
+            else:
+                serializer_list.append(serializer)
+
+        with transaction.atomic():
+            for serializer in serializer_list:
+                serializer.save()
+            return Response({'success': True, 'detail': 'All exercises saved successfully'},
+                            status=status.HTTP_201_CREATED)
+
+        return Response({'success': False, 'detail': "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
         self.kwargs['pk'] = request.QUERY_PARAMS.get('id', None)
