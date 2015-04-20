@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from datetime import time
 from django.core import serializers as django_serializer
 from requests.api import request
 from rest_framework import serializers
@@ -8,6 +9,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 from accounts.models import AppUser, AppStudent, UserSubscription, AppCoach
 from workouts.models import ExerciseResult, ExerciseType, AssignedWorkout, WorkoutDefinition, Exercise
+from workouts import EXERCISE_TYPE_TIME, EXERCISE_TYPE_ROUNDS
 
 
 class WorkTypeSerializer(serializers.ModelSerializer):
@@ -49,19 +51,27 @@ class DefinedWorkoutSerializer(serializers.ModelSerializer):
         workout_date = self.context['request'].QUERY_PARAMS.get('workout_date', None)
         workout_date = datetime.strptime(workout_date, '%Y-%m-%d')
         logged_in_user = self.context['request'].user
-        next_workout_id = AssignedWorkout.objects.filter(assigned_date__gt=workout_date,
-                                                         student_id=logged_in_user.student_user.id).\
-                                                        values_list('workout', flat=True)[:1]
-        return next_workout_id
+        assigned_workout = obj.assigned_workouts.all().filter(assigned_dates__assigned_date__gt=datetime.combine(
+            workout_date, time.max), student_id=logged_in_user.student_user.id).order_by('assigned_dates__assigned_date')
+        if assigned_workout:
+            next_workout_datetime = assigned_workout[0].assigned_dates.all().filter(assigned_date__gt=datetime.combine(
+                                    workout_date, time.max)).order_by('assigned_date')
+            if next_workout_datetime:
+                return next_workout_datetime[0].assigned_date.date()
+        return ""
 
     def get_prev_workout(self, obj):
         workout_date = self.context['request'].QUERY_PARAMS.get('workout_date', None)
         workout_date = datetime.strptime(workout_date, '%Y-%m-%d')
         logged_in_user = self.context['request'].user
-        prev_workout_id = AssignedWorkout.objects.filter(assigned_date__lt=workout_date,
-                                                         student_id=logged_in_user.student_user.id).\
-                                                        values_list('workout', flat=True)[:1]
-        return prev_workout_id
+        assigned_workout = obj.assigned_workouts.all().filter(assigned_dates__assigned_date__lt=datetime.combine(
+            workout_date, time.min), student_id=logged_in_user.student_user.id).order_by('-assigned_dates__assigned_date')
+        if assigned_workout:
+            prev_workout_datetime = assigned_workout[0].assigned_dates.all().filter(assigned_date__lt=datetime.combine(
+                                    workout_date, time.min)).order_by('-assigned_date')
+            if prev_workout_datetime:
+                return prev_workout_datetime[0].assigned_date.date()
+        return ""
 
     def get_exercises(self, obj):
         if obj:
@@ -75,16 +85,12 @@ class DefinedWorkoutSerializer(serializers.ModelSerializer):
 
                 exercises.append(exercise_dict)
 
-            return {'exercises': exercises}
-        return {'exercises': []}
+            return exercises
+        return []
 
     class Meta:
         model = WorkoutDefinition
         exclude = ('created', 'updated', 'assigned_to')
-        # fields = ('introduction_header', 'introduction_textfield', 'warmup_header', 'warmup_content','warmup_notes',
-        # 'substitution_header', 'substitution_content', 'substitution_notes', 'cooldown_header','cooldown_content',
-        # 'cooldown_notes', 'extracredit_header', 'extracredit_content', 'extracredit_notes', 'homework_header',
-        # 'homework_content', 'homework_notes', )
 
 
 class AssignedWorkoutSerializer(serializers.ModelSerializer):
@@ -126,6 +132,7 @@ class AssignedWorkoutResult(serializers.ModelSerializer):
 class SubscriptionSerializers(serializers.ModelSerializer):
     subscription_choices = serializers.SerializerMethodField('subscription_choices_get')
     created = serializers.SerializerMethodField('created_get')
+
     class Meta:
         model = UserSubscription
         fields = ('subscription_choices','created')
@@ -143,24 +150,32 @@ class SubscriptionSerializers(serializers.ModelSerializer):
 
 
 class ExerciseResultSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='pk', read_only=True)
-    exercise = serializers.SerializerMethodField('get_workout')
+    # id = serializers.IntegerField(source='pk', read_only=True)
 
     class Meta:
         model = ExerciseResult
-        fields = ('id', 'assigned_workout', 'time', 'rounds', 'note', 'exercise')
+        fields = ('id', 'time_taken', 'rounds', 'note', 'exercise', 'exercise_result_workout')
+        read_only_fields = ('id',)
+        write_only_fields = ('exercise_result_workout',)
 
-    def get_workout(self, obj):
-        exercise_list = obj.assigned_workout.workout.exercise_workout.filter(id=obj.assigned_workout.workout.id)
-        data = []
-        for exercise in exercise_list:
-            data.append({"id": exercise.id, "Excercise":exercise.workout_header,
-                         "WorkOut":exercise.workout.introduction_header})
+    def validate(self, data):
+        """
+        Check that the Exercise exists and if it's type is Round than the data contains 'rounds' parameter and if and
+        if it's type is Time than it has the time_taken parameter.
+        """
+        exercise = data['exercise']
+        if exercise.exercise_type.type_name == EXERCISE_TYPE_TIME:
+            if 'rounds' in data:
+                del data['rounds']
+            if 'time_taken' not in data:
+                raise serializers.ValidationError("time_taken parameter is required for this exercise.")
+        elif exercise.exercise_type.type_name == EXERCISE_TYPE_ROUNDS:
+            if 'time_taken' in data:
+                del data['time_taken']
+            if 'rounds' not in data:
+                raise serializers.ValidationError("rounds parameter is required for this exercise.")
 
         return data
-        # exercise_list_dict = exercise_list.__dict__
-        # return json.dumps(list(exercise_list_dict))
-        # return django_serializer.serialize('json', exercise_list_dict)
 
 
 class UpdateWorkoutSerializer(ExerciseResultSerializer):

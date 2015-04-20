@@ -47,7 +47,7 @@ class Register(APIView):
             if serializer.data['user_role'] == 0:
                 try:
                     subscription = UserSubscription.objects.create()
-                    AppStudent.objects.create(subscription_id=subscription, app_user_id=serializer.data['id'])
+                    AppStudent.objects.create(subscription=subscription, app_user_id=serializer.data['id'])
                 except Exception as ex:
                     return Response({'success': False, 'detail': _('Subscription not created.')},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)

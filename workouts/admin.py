@@ -1,7 +1,8 @@
 from django.contrib import admin
 
 # import from app
-from workouts.models import WorkoutDefinition, AssignedWorkout, ExerciseType, ExerciseResult, Exercise
+from workouts.models import WorkoutDefinition, AssignedWorkout, AssignedWorkoutDate, ExerciseType, ExerciseResult, \
+    Exercise
 
 
 # class WorkoutAdmin(admin.ModelAdmin):
@@ -38,20 +39,26 @@ from workouts.models import WorkoutDefinition, AssignedWorkout, ExerciseType, Ex
 #          'fields': ('workout_header','workout', 'workout_content', 'workout_notes','workout_type')}),
 #     )
 #
-# class AssignedWorkoutAdmin(admin.ModelAdmin):
-#     list_display = ('student', 'workout', 'assigned_date',)
-#     fieldsets = (
-#         ('Assigned Workout', {
-#          'fields': ('student', 'workout', 'assigned_date',)}),
-#     )
 #
 #
 # class ExerciseResultAdmin(admin.ModelAdmin):
 #     list_display = ('time', 'rounds', 'assigned_workout', 'note')
 
+class AssignedWokoutDateInline(admin.StackedInline):
+    model = AssignedWorkoutDate
+    extra = 1
+    classes = ('collapse open',)
+    inline_classes = ('collapse open',)
+
+
+class AssignedWorkoutAdmin(admin.ModelAdmin):
+    inlines = [
+        AssignedWokoutDateInline,
+    ]
 
 admin.site.register(ExerciseType)
 admin.site.register(WorkoutDefinition)
-admin.site.register(AssignedWorkout)
+admin.site.register(AssignedWorkout, AssignedWorkoutAdmin)
+# admin.site.register(AssignedWorkoutDate)
 admin.site.register(ExerciseResult)
 admin.site.register(Exercise)

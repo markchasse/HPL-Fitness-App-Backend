@@ -35,7 +35,7 @@ class AuthUserManager(BaseUserManager):
 class AppUser(AbstractBaseUser, PermissionsMixin):
 
     first_name = models.CharField(verbose_name=_("First Name"), max_length=50)
-    last_name = models.CharField(verbose_name=_("First Name"), max_length=50)
+    last_name = models.CharField(verbose_name=_("Last Name"), max_length=50)
     email = models.EmailField(verbose_name=_("Email"), unique=True, max_length=255)
     is_staff = models.BooleanField(verbose_name=_('staff'), default=False, null=False)
     is_active = models.BooleanField(default=True)

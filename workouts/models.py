@@ -87,8 +87,21 @@ class Exercise(models.Model):
 
 class AssignedWorkout(models.Model):
     student = models.ForeignKey(AppStudent, related_name='student_assigned_workout', null=False)
-    workout = models.ForeignKey(WorkoutDefinition, related_name='defined_workout_id', null=False)
+    workout = models.ForeignKey(WorkoutDefinition, related_name='assigned_workouts', null=False)
 
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["updated"]
+        unique_together = ('student', 'workout')
+
+    def __unicode__(self):
+        return self.workout.introduction_header
+
+
+class AssignedWorkoutDate(models.Model):
+    assigned_workout = models.ForeignKey(AssignedWorkout, related_name='assigned_dates', null=False, blank=False)
     assigned_date = models.DateTimeField(verbose_name=_('Date to deliver workout'))
 
     created = models.DateTimeField(auto_now_add=True)
@@ -98,14 +111,16 @@ class AssignedWorkout(models.Model):
         ordering = ["assigned_date"]
 
     def __unicode__(self):
-        return self.workout.introduction_header
+        return self.assigned_date.strftime('%Y-%m-%d')
 
 
 class ExerciseResult(models.Model):
     note = models.CharField(verbose_name=_('Exercise Note'), null=True, blank=True, max_length=1000)
     time_taken = models.PositiveIntegerField(verbose_name=_('Exercise Time In Seconds'), null=True, blank=True)
-    rounds = models.PositiveSmallIntegerField(verbose_name=_('Exercise Rounds'), null=True, max_length=10)
+    rounds = models.PositiveSmallIntegerField(verbose_name=_('Exercise Rounds'), null=True, blank=True, max_length=10)
     exercise = models.ForeignKey(Exercise, related_name="exercise_result", blank=False, null=False)
+    exercise_result_workout = models.ForeignKey(AssignedWorkout, related_name="workout_exercise_result",
+                                                blank=False, null=False)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
