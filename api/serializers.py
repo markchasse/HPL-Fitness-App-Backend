@@ -51,7 +51,7 @@ class DefinedWorkoutSerializer(serializers.ModelSerializer):
         workout_date = self.context['request'].QUERY_PARAMS.get('workout_date', None)
         workout_date = datetime.strptime(workout_date, '%Y-%m-%d')
         logged_in_user = self.context['request'].user
-        assigned_workout = obj.assigned_workouts.all().filter(assigned_dates__assigned_date__gt=datetime.combine(
+        assigned_workout = AssignedWorkout.objects.filter(assigned_dates__assigned_date__gt=datetime.combine(
             workout_date, time.max), student_id=logged_in_user.student_user.id).order_by('assigned_dates__assigned_date')
         if assigned_workout:
             next_workout_datetime = assigned_workout[0].assigned_dates.all().filter(assigned_date__gt=datetime.combine(
@@ -64,7 +64,7 @@ class DefinedWorkoutSerializer(serializers.ModelSerializer):
         workout_date = self.context['request'].QUERY_PARAMS.get('workout_date', None)
         workout_date = datetime.strptime(workout_date, '%Y-%m-%d')
         logged_in_user = self.context['request'].user
-        assigned_workout = obj.assigned_workouts.all().filter(assigned_dates__assigned_date__lt=datetime.combine(
+        assigned_workout = AssignedWorkout.objects.filter(assigned_dates__assigned_date__lt=datetime.combine(
             workout_date, time.min), student_id=logged_in_user.student_user.id).order_by('-assigned_dates__assigned_date')
         if assigned_workout:
             prev_workout_datetime = assigned_workout[0].assigned_dates.all().filter(assigned_date__lt=datetime.combine(
