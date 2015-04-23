@@ -66,10 +66,10 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
 
 class AppStudent(models.Model):
     app_user = models.OneToOneField(AppUser, related_name='student_user')
-    subscription = models.ForeignKey("UserSubscription", related_name='subscription_student')
+    subscription = models.OneToOneField("UserSubscription", related_name='subscription_student')
 
     def __unicode__(self):
-        return str(self.app_user.first_name)
+        return self.app_user.first_name
 
 
 class AppCoach(models.Model):

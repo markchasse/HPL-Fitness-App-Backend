@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.utils import timezone
 
 # import from project
 from accounts.models import AppCoach, AppStudent
@@ -121,6 +122,8 @@ class ExerciseResult(models.Model):
     exercise = models.ForeignKey(Exercise, related_name="exercise_result", blank=False, null=False)
     exercise_result_workout = models.ForeignKey(AssignedWorkout, related_name="workout_exercise_result",
                                                 blank=False, null=False)
+    result_submit_date = models.DateField(verbose_name='Result Submitted Date', null=False, blank=False,
+                                          default=timezone.now().date())
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
