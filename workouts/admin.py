@@ -56,7 +56,7 @@ class AssignedWorkoutAdmin(admin.ModelAdmin):
         AssignedWokoutDateInline,
     ]
 
-admin.site.register(ExerciseType)
+# admin.site.register(ExerciseType)
 admin.site.register(WorkoutDefinition)
 admin.site.register(AssignedWorkout, AssignedWorkoutAdmin)
 # admin.site.register(AssignedWorkoutDate)

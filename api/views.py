@@ -1,18 +1,22 @@
 import datetime
 
 from django.db import transaction
+from django.db.models import Count
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
 from rest_framework.parsers import JSONParser
+from rest_framework.parsers import FormParser
+from rest_framework.parsers import MultiPartParser
 from rest_framework import mixins
 
 from api.serializers import SubscriptionSerializers, DefinedWorkoutSerializer, ExerciseResultSerializer,\
-    WorkOutResultDateSerializer, WorkOutResultSerializer
-from accounts.models import UserSubscription
-from workouts.models import WorkoutDefinition, AssignedWorkout, Exercise, ExerciseResult
+    WorkOutResultDateSerializer, WorkOutResultSerializer, PersonalBestSerializer
+from workouts import EXERCISE_TYPE_ROUNDS, EXERCISE_TYPE_TIME
+from workouts.models import WorkoutDefinition, AssignedWorkout, AssignedWorkoutDate, Exercise, ExerciseResult, \
+    PersonalBest
 
 
 #logged in user can check his/her subscription
@@ -44,26 +48,67 @@ class AssignedWorkoutViewSet(ListAPIView):
         return []
 
 
+def get_value_of_workout_session(exercise_results_of_one_workout_session):
+    one_workout_result_sum = 0
+    for exercise_result in exercise_results_of_one_workout_session:
+        if exercise_result.exercise.exercise_type.type_name == EXERCISE_TYPE_ROUNDS:
+            one_workout_result_sum = one_workout_result_sum + exercise_result.rounds
+        elif exercise_result.exercise.exercise_type.type_name == EXERCISE_TYPE_TIME:
+            one_workout_result_sum = one_workout_result_sum + exercise_result.time_taken
+
+    return one_workout_result_sum
+
+
+def update_personal_best(student, assigned_workout_date_obj):
+    existing_personal_best = PersonalBest.objects.filter(student=student,
+                                                         workout_assigned_date__assigned_workout__workout=
+                                                         assigned_workout_date_obj.assigned_workout.workout)
+    if existing_personal_best:
+        existing = ExerciseResult.objects.filter(
+            exercise_result_workout_date=existing_personal_best[0].workout_assigned_date)
+        to_compare = ExerciseResult.objects.filter(exercise_result_workout_date=assigned_workout_date_obj)
+
+        existing_personal_best_value = get_value_of_workout_session(existing)
+        to_compare_personal_best_value = get_value_of_workout_session(to_compare)
+
+        if to_compare_personal_best_value > existing_personal_best_value:
+            existing_personal_best[0].workout_assigned_date = assigned_workout_date_obj
+            existing_personal_best[0].save()
+
+    else:
+        new_personal_best = PersonalBest(student=student, workout_assigned_date=assigned_workout_date_obj)
+        new_personal_best.save()
+
+
 class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = ExerciseResultSerializer
     queryset = ExerciseResult.objects.all()
-    parser_classes = (JSONParser,)
+    parser_classes = (JSONParser, FormParser, MultiPartParser)
 
     def get_queryset(self):
         logged_in_student = self.request.user.student_user
         exercise_result_id = self.request.QUERY_PARAMS.get('id', None)
         queryset = super(ResultViewSet, self).get_queryset()
-        queryset = queryset.filter(exercise_result_workout__student=logged_in_student)
+        queryset = queryset.filter(exercise_result_workout_date__assigned_workout__student=logged_in_student)
         if exercise_result_id:
             return queryset.filter(id=exercise_result_id)
-        return queryset.order_by('result_submit_date').distinct('result_submit_date')
+        queryset = queryset.order_by('exercise_result_workout_date_id').distinct('exercise_result_workout_date')
+        return queryset
 
     def create(self, request, **kwargs):
         logged_in_student = self.request.user.student_user
         exercise_result_objects = request.data
         serializer_list = []
 
+        workout_assign_date = exercise_result_objects['workout_assign_date']
+        workout_assign_date = datetime.datetime.strptime(workout_assign_date, '%Y-%m-%d')
+        if not workout_assign_date:
+            return Response({'success': False, 'detail': "workout_assign_date is a required parameter."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         for exercise_result_key in exercise_result_objects:
+            if exercise_result_key == 'workout_assign_date':
+                continue
             data = exercise_result_objects[exercise_result_key]
             if 'exercise' in data:
                 try:
@@ -79,12 +124,16 @@ class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Lis
             else:
                 return Response({'success': False, 'detail': '"workout" is a required parameter.',
                                  'object': exercise_result_key}, status=status.HTTP_404_NOT_FOUND)
-            assigned_workout = AssignedWorkout.objects.filter(student=logged_in_student, workout=workout)
-            if not assigned_workout:
-                return Response({'success': False, 'detail': 'Invalid Workout id.', 'object': exercise_result_key},
-                                status=status.HTTP_400_BAD_REQUEST)
+            assigned_workout_date_id = AssignedWorkoutDate.objects.filter(assigned_workout__student=logged_in_student,
+                                                                          assigned_workout__workout=workout,
+                                                                          assigned_date__year=workout_assign_date.year,
+                                                                          assigned_date__month=workout_assign_date.month,
+                                                                          assigned_date__day=workout_assign_date.day)
+            if not assigned_workout_date_id:
+                return Response({'success': False, 'detail': 'Invalid workout_assign_date .',
+                                 'object': exercise_result_key}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                data['exercise_result_workout'] = assigned_workout[0].id
+                data['exercise_result_workout_date'] = assigned_workout_date_id[0].id
             serializer = ExerciseResultSerializer(data=data)
             if not serializer.is_valid():
                 return Response({'success': False, 'detail': serializer.errors, 'object': exercise_result_key},
@@ -96,25 +145,30 @@ class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Lis
             with transaction.atomic():
                 for serializer in serializer_list:
                     serializer.save()
+
+                update_personal_best(student=logged_in_student, assigned_workout_date_obj=assigned_workout_date_id[0])
                 return Response({'success': True, 'detail': 'All exercises saved successfully'},
                                 status=status.HTTP_201_CREATED)
 
         return Response({'success': False, 'detail': "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
+        logged_in_student = self.request.user.student_user
         exercise_result_id = request.QUERY_PARAMS.get('id', None)
         if not exercise_result_id:
             return Response({'success': False, 'detail': 'id is a required parameter.'},
                             status=status.HTTP_400_BAD_REQUEST)
         self.kwargs['pk'] = exercise_result_id
         data = request.DATA.copy()
-        if 'exercise_result_workout' in data:
-            del data['exercise_result_workout']
+        if 'exercise_result_workout_date' in data:
+            del data['exercise_result_workout_date']
         instance = self.get_object()
         data['exercise'] = instance.exercise.id
         serializer = self.get_serializer(instance, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+
+        update_personal_best(logged_in_student, instance.exercise_result_workout_date)
 
         return Response(serializer.data)
 
@@ -134,17 +188,17 @@ class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Lis
 def workout_result(request):
     logged_in_student = request.user.student_user
     workout_id = request.QUERY_PARAMS.get('id', None)
-    date_result_submitted = request.QUERY_PARAMS.get('date', None)
+    date_workout_assigned = request.QUERY_PARAMS.get('date', None)
     if not workout_id:
         return Response({'success': False, 'detail': 'id is a required parameter.'})
-    if not date_result_submitted:
+    if not date_workout_assigned:
         return Response({'success': False, 'detail': 'date is a required parameter.'})
 
-    date_result_submitted = datetime.datetime.strptime(date_result_submitted, '%Y-%m-%d')
+    date_workout_assigned = datetime.datetime.strptime(date_workout_assigned, '%Y-%m-%d')
     queryset = WorkoutDefinition.objects.filter(id=workout_id, assigned_workouts__student=logged_in_student)
     if queryset:
         serializer = WorkOutResultSerializer(queryset[0], context={'request': request,
-                                                                   'date_result_submitted': date_result_submitted})
+                                                                   'date_workout_assigned': date_workout_assigned})
     else:
         return Response({'success': False, 'detail': 'Invalid Workout id.'})
 
@@ -152,13 +206,12 @@ def workout_result(request):
 
 @api_view(['GET'])
 def personal_best(request):
-    WorkoutDefinition.objects.filter()
     logged_in_student = request.user.student_user
-    exercise_result_id = request.QUERY_PARAMS.get('id', None)
+    personal_bests = PersonalBest.objects.filter(student=logged_in_student)
 
-    queryset = ExerciseResult.objects.filter(exercise_result_workout__student=logged_in_student)
+    serializer = PersonalBestSerializer(personal_bests, many=True)
+    return Response(serializer.data)
 
-    return queryset.order_by('result_submit_date').distinct('result_submit_date')
 
 # class WorkOutResult(viewsets.ReadOnlyModelViewSet):
 #     serializer_class = WorkOutResultDateSerializer

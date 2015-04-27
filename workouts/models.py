@@ -120,10 +120,25 @@ class ExerciseResult(models.Model):
     time_taken = models.PositiveIntegerField(verbose_name=_('Exercise Time In Seconds'), null=True, blank=True)
     rounds = models.PositiveSmallIntegerField(verbose_name=_('Exercise Rounds'), null=True, blank=True, max_length=10)
     exercise = models.ForeignKey(Exercise, related_name="exercise_result", blank=False, null=False)
-    exercise_result_workout = models.ForeignKey(AssignedWorkout, related_name="workout_exercise_result",
-                                                blank=False, null=False)
+    exercise_result_workout_date = models.ForeignKey(AssignedWorkoutDate, related_name="workout_exercise_result",
+                                                     blank=False, null=False)
     result_submit_date = models.DateField(verbose_name='Result Submitted Date', null=False, blank=False,
                                           default=timezone.now().date())
+
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["exercise_result_workout_date"]
+
+    def __unicode__(self):
+        return self.exercise.exercise_header
+
+
+class PersonalBest(models.Model):
+    student = models.ForeignKey(AppStudent, related_name='student_personal_best', null=False)
+    workout_assigned_date = models.ForeignKey(AssignedWorkoutDate, related_name="assigned_date_personal_best",
+                                              blank=False, null=False, unique=True)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -132,4 +147,5 @@ class ExerciseResult(models.Model):
         ordering = ["updated"]
 
     def __unicode__(self):
-        return self.exercise.exercise_header
+        return self.workout_assigned_date.assigned_date.strftime('%Y-%m-%d')
+
