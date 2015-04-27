@@ -1,7 +1,7 @@
 import datetime
 
 from django.db import transaction
-from django.db.models import Count
+from django.conf import settings
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
@@ -11,11 +11,13 @@ from rest_framework.parsers import JSONParser
 from rest_framework.parsers import FormParser
 from rest_framework.parsers import MultiPartParser
 from rest_framework import mixins
+from rest_framework.throttling import ScopedRateThrottle
 
 from api.serializers import SubscriptionSerializers, DefinedWorkoutSerializer, ExerciseResultSerializer,\
-    WorkOutResultDateSerializer, WorkOutResultSerializer, PersonalBestSerializer
+    WorkOutResultDateSerializer, WorkOutResultSerializer, PersonalBestSerializer, ContactUsSerializer
+from FitnessApp.utils import send_custom_email
 from workouts import EXERCISE_TYPE_ROUNDS, EXERCISE_TYPE_TIME
-from workouts.models import WorkoutDefinition, AssignedWorkout, AssignedWorkoutDate, Exercise, ExerciseResult, \
+from workouts.models import WorkoutDefinition, AssignedWorkoutDate, Exercise, ExerciseResult, \
     PersonalBest
 
 
@@ -213,14 +215,22 @@ def personal_best(request):
     return Response(serializer.data)
 
 
-# class WorkOutResult(viewsets.ReadOnlyModelViewSet):
-#     serializer_class = WorkOutResultDateSerializer
-#     queryset = ExerciseResult.objects.all()
-#
-#     def get_queryset(self):
-#         logged_in_student = self.request.user.student_user
-#         queryset = super(WorkOutResult, self).get_queryset()
-#         queryset = queryset.filter(exercise_result_workout__student=logged_in_student).\
-#             order_by('result_submit_date').distinct('result_submit_date')
-#
-#         return queryset
+class ContactUsViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = 'contacts'
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        data['sender'] = request.user.id
+        serializer = ContactUsSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            ctx = {
+                "to": settings.DEFAULT_TO_EMAIL,
+                "from": serializer.instance.email,
+                "subject": serializer.instance.subject,
+                "message": serializer.instance.message
+            }
+            send_custom_email(request, ctx)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

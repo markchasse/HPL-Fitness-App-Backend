@@ -101,4 +101,22 @@ class UserSubscription(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return str(self.subscription_choices)
+        return unicode(self.subscription_choices)
+
+
+class ContactUs(models.Model):
+    sender = models.ForeignKey(AppUser, related_name="app_user")
+    email = models.EmailField(null=False, blank=False)
+    subject = models.CharField(max_length=500, null=False, blank=False)
+    message = models.TextField()
+
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["updated"]
+        verbose_name = "Contact Us"
+        verbose_name_plural = "Contact Us"
+
+    def __unicode__(self):
+        return self.subject

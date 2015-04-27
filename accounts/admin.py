@@ -1,5 +1,5 @@
 from django.contrib import admin
-from accounts.models import AppUser, AppCoach, AppStudent
+from accounts.models import AppUser, AppCoach, AppStudent, ContactUs
 
 
 class StudentInline(admin.TabularInline):
@@ -15,3 +15,4 @@ class StudentAdmin(admin.ModelAdmin):
 
 admin.site.register(AppCoach)
 admin.site.register(AppUser, StudentAdmin)
+admin.site.register(ContactUs)

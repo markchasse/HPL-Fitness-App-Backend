@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # import from app
 from workouts.models import WorkoutDefinition, AssignedWorkout, AssignedWorkoutDate, ExerciseType, ExerciseResult, \
-    Exercise
+    Exercise, PersonalBest
 
 
 # class WorkoutAdmin(admin.ModelAdmin):
@@ -62,3 +62,4 @@ admin.site.register(AssignedWorkout, AssignedWorkoutAdmin)
 # admin.site.register(AssignedWorkoutDate)
 admin.site.register(ExerciseResult)
 admin.site.register(Exercise)
+admin.site.register(PersonalBest)
