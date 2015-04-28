@@ -187,7 +187,7 @@ class WorkOutResultSerializer(serializers.ModelSerializer):
 class PersonalBestSerializer(serializers.ModelSerializer):
     workout_id = serializers.SerializerMethodField()
     workout_header = serializers.SerializerMethodField()
-    workout_assigned_date_id = serializers.IntegerField(read_only=True, source="workout_assigned_date.id")
+    workout_assigned_date = serializers.SerializerMethodField()
 
     def get_workout_id(self, obj):
         return obj.workout_assigned_date.assigned_workout.workout.id
@@ -195,9 +195,12 @@ class PersonalBestSerializer(serializers.ModelSerializer):
     def get_workout_header(self, obj):
         return obj.workout_assigned_date.assigned_workout.workout.introduction_header
 
+    def get_workout_assigned_date(self, obj):
+        return obj.workout_assigned_date.assigned_date.strftime('%Y-%m-%d')
+
     class Meta:
         model = PersonalBest
-        fields = ('workout_assigned_date_id', 'workout_id', 'workout_header')
+        fields = ('workout_assigned_date', 'workout_id', 'workout_header')
 
 
 class ContactUsSerializer(serializers.ModelSerializer):
