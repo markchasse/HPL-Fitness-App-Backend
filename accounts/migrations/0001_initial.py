@@ -59,6 +59,24 @@ class Migration(migrations.Migration):
             bases=(models.Model,),
         ),
         migrations.CreateModel(
+            name='ContactUs',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('email', models.EmailField(max_length=75)),
+                ('subject', models.CharField(max_length=500)),
+                ('message', models.TextField()),
+                ('created', models.DateTimeField(auto_now_add=True)),
+                ('updated', models.DateTimeField(auto_now=True)),
+                ('sender', models.ForeignKey(related_name='app_user', to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'ordering': ['updated'],
+                'verbose_name': 'Contact Us',
+                'verbose_name_plural': 'Contact Us',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
             name='PasswordResetRequest',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
@@ -86,7 +104,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='appstudent',
             name='subscription',
-            field=models.ForeignKey(related_name='subscription_student', to='accounts.UserSubscription'),
+            field=models.OneToOneField(related_name='subscription_student', to='accounts.UserSubscription'),
             preserve_default=True,
         ),
     ]

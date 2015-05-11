@@ -2,13 +2,14 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
+import datetime
 import FitnessApp.utils
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '__first__'),
+        ('accounts', '0001_initial'),
     ]
 
     operations = [
@@ -43,9 +44,7 @@ class Migration(migrations.Migration):
             name='Exercise',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('exercise_header', models.CharField(max_length=500, verbose_name='Exercise Header')),
                 ('exercise_content', models.CharField(max_length=800, null=True, verbose_name='Exercise content', blank=True)),
-                ('exercise_notes', models.TextField(verbose_name='Exercise Notes')),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
             ],
@@ -55,32 +54,16 @@ class Migration(migrations.Migration):
             bases=(models.Model,),
         ),
         migrations.CreateModel(
-            name='ExerciseResult',
+            name='PersonalBest',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('note', models.CharField(max_length=1000, null=True, verbose_name='Exercise Note', blank=True)),
-                ('time_taken', models.PositiveIntegerField(null=True, verbose_name='Exercise Time In Seconds', blank=True)),
-                ('rounds', models.PositiveSmallIntegerField(max_length=10, null=True, verbose_name='Exercise Rounds', blank=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
-                ('exercise', models.ForeignKey(related_name='exercise_result', to='workouts.Exercise')),
-                ('exercise_result_workout', models.ForeignKey(related_name='workout_exercise_result', to='workouts.AssignedWorkout')),
+                ('student', models.ForeignKey(related_name='student_personal_best', to='accounts.AppStudent')),
+                ('workout_assigned_date', models.ForeignKey(related_name='assigned_date_personal_best', to='workouts.AssignedWorkoutDate', unique=True)),
             ],
             options={
                 'ordering': ['updated'],
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='ExerciseType',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('type_name', models.CharField(unique=True, max_length=100)),
-                ('type_description', models.TextField(null=True, blank=True)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('updated', models.DateTimeField(auto_now=True)),
-            ],
-            options={
             },
             bases=(models.Model,),
         ),
@@ -90,8 +73,11 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('image', models.ImageField(default=b'default/default_image.png', null=True, upload_to=FitnessApp.utils.file_upload_to, blank=True)),
                 ('caption', models.CharField(max_length=250, null=True, verbose_name='Image Caption', blank=True)),
+                ('workout_nick_name', models.CharField(max_length=200, null=True, verbose_name='Workout Nick Name', blank=True)),
                 ('introduction_header', models.CharField(max_length=500, verbose_name='Introduction Header')),
                 ('introduction_textfield', models.TextField(verbose_name='Introduction Text')),
+                ('workout_header', models.CharField(max_length=500, null=True, verbose_name='WarmUp Header', blank=True)),
+                ('workout_content', models.CharField(max_length=500, null=True, verbose_name='Workout Content', blank=True)),
                 ('warmup_header', models.CharField(max_length=500, null=True, verbose_name='WarmUp Header', blank=True)),
                 ('warmup_content', models.CharField(max_length=800, null=True, verbose_name='WarmUp content', blank=True)),
                 ('warmup_notes', models.TextField(null=True, verbose_name='WarmUp Notes', blank=True)),
@@ -118,10 +104,40 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model,),
         ),
+        migrations.CreateModel(
+            name='WorkoutResult',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('note', models.CharField(max_length=1000, null=True, verbose_name='Workout Result Note', blank=True)),
+                ('time_taken', models.PositiveIntegerField(null=True, verbose_name='Workout Time In Seconds', blank=True)),
+                ('rounds', models.PositiveSmallIntegerField(max_length=10, null=True, verbose_name='Workout Rounds', blank=True)),
+                ('result_submit_date', models.DateField(default=datetime.date(2015, 5, 11), verbose_name=b'Result Submitted Date')),
+                ('created', models.DateTimeField(auto_now_add=True)),
+                ('updated', models.DateTimeField(auto_now=True)),
+                ('result_workout_assign_date', models.ForeignKey(related_name='workout_result', to='workouts.AssignedWorkoutDate')),
+            ],
+            options={
+                'ordering': ['result_workout_assign_date'],
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='WorkoutType',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('type_name', models.CharField(unique=True, max_length=100)),
+                ('type_description', models.TextField(null=True, blank=True)),
+                ('created', models.DateTimeField(auto_now_add=True)),
+                ('updated', models.DateTimeField(auto_now=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
         migrations.AddField(
-            model_name='exercise',
-            name='exercise_type',
-            field=models.ForeignKey(related_name='type_of_exercise', to='workouts.ExerciseType'),
+            model_name='workoutdefinition',
+            name='workout_type',
+            field=models.ForeignKey(related_name='type_of_workout', default=None, to='workouts.WorkoutType'),
             preserve_default=True,
         ),
         migrations.AddField(
