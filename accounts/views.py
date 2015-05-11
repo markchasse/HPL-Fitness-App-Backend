@@ -147,11 +147,11 @@ class ForgetPasswordEmail(APIView):
             to = user.email
             msg = EmailMultiAlternatives("Password Reset",reset_request.hash, settings.DEFAULT_FROM_EMAIL, [to])
             msg.send()
-            return Response(SUCCESS_DICT,status=status.HTTP_200_OK)
+            return Response({"message": "Kindly check your email for code.",'success': True},status=status.HTTP_200_OK)
 
 
 class ResetPassword(APIView):
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (AllowAny, )
 
     def post(self, request):
         data = request.DATA

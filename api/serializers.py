@@ -3,7 +3,7 @@ from datetime import time
 from rest_framework import serializers
 
 from accounts.models import AppUser, UserSubscription, AppCoach, ContactUs
-from workouts.models import ExerciseResult, AssignedWorkout, WorkoutDefinition, PersonalBest
+from workouts.models import WorkoutResult, AssignedWorkout, WorkoutDefinition, PersonalBest, Exercise
 from workouts import EXERCISE_TYPE_TIME, EXERCISE_TYPE_ROUNDS
 
 
@@ -23,6 +23,7 @@ class CoachSerializer(serializers.ModelSerializer):
 
 
 class DefinedWorkoutSerializer(serializers.ModelSerializer):
+    workout_type = serializers.SerializerMethodField('workout_choices_get')
     exercises = serializers.SerializerMethodField()
     coach = CoachSerializer(read_only=True)
     next_workout = serializers.SerializerMethodField()
@@ -74,16 +75,16 @@ class DefinedWorkoutSerializer(serializers.ModelSerializer):
         if obj:
             exercises = []
             for exercise in obj.exercises.all():
-                exercise_dict = {'id': exercise.id}
-                exercise_dict['exercise_header'] = exercise.exercise_header
+                exercise_dict = {}
+                # exercise_dict = {'id': exercise.id}
                 exercise_dict['exercise_content'] = exercise.exercise_content
-                exercise_dict['exercise_notes'] = exercise.exercise_notes
-                exercise_dict['exercise_type'] = exercise.exercise_type.type_name
-
                 exercises.append(exercise_dict)
 
             return exercises
         return []
+
+    def workout_choices_get(self, obj):
+         return obj.workout_type.type_name
 
 
 class SubscriptionSerializers(serializers.ModelSerializer):
@@ -106,82 +107,114 @@ class SubscriptionSerializers(serializers.ModelSerializer):
         return date_var
 
 
-class ExerciseResultSerializer(serializers.ModelSerializer):
+class WorkoutResultSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = ExerciseResult
-        fields = ('id', 'time_taken', 'rounds', 'note', 'exercise', 'exercise_result_workout_date')
+        model = WorkoutResult
+        fields = ('id', 'time_taken', 'rounds','note', 'result_workout_assign_date')
         read_only_fields = ('id',)
-        write_only_fields = ('exercise_result_workout_date',)
+        write_only_fields = ('result_workout_assign_date',)
 
     def validate(self, data):
         """
         Check that the Exercise exists and if it's type is Round than the data contains 'rounds' parameter and if and
         if it's type is Time than it has the time_taken parameter.
         """
-        exercise = data['exercise']
-        if exercise.exercise_type.type_name == EXERCISE_TYPE_TIME:
+        if self.instance:
+            workout = self.instance.result_workout_assign_date.assigned_workout.workout
+        else:
+            workout = data['result_workout_assign_date'].assigned_workout.workout
+
+        if workout.workout_type.type_name == EXERCISE_TYPE_TIME:
             if 'rounds' in data:
                 del data['rounds']
             if 'time_taken' not in data:
-                raise serializers.ValidationError("time_taken parameter is required for this exercise.")
-        elif exercise.exercise_type.type_name == EXERCISE_TYPE_ROUNDS:
+                raise serializers.ValidationError("time_taken parameter is required for this workout.")
+        elif workout.workout_type.type_name == EXERCISE_TYPE_ROUNDS:
             if 'time_taken' in data:
                 del data['time_taken']
             if 'rounds' not in data:
-                raise serializers.ValidationError("rounds parameter is required for this exercise.")
+                raise serializers.ValidationError("rounds parameter is required for this workout.")
 
         return data
 
 
 class WorkOutResultDateSerializer(serializers.ModelSerializer):
 
-    exercise_result_workout_date = serializers.SerializerMethodField()
-    workout = serializers.IntegerField(read_only=True, source="exercise_result_workout_date.assigned_workout.workout.id")
+    result_workout_assign_date = serializers.SerializerMethodField()
+    workout = serializers.IntegerField(read_only=True, source="result_workout_assign_date.assigned_workout.workout.id")
 
-    def get_exercise_result_workout_date(self, obj):
-        return obj.exercise_result_workout_date.assigned_date.date().strftime('%Y-%m-%d')
+    def get_result_workout_assign_date(self, obj):
+        return obj.result_workout_assign_date.assigned_date.date().strftime('%Y-%m-%d')
 
     class Meta:
-        model = ExerciseResult
-        fields = ('id', 'exercise_result_workout_date', 'workout')
-        read_only_fields = ('id', 'exercise_result_workout_date', 'workout')
+        model = WorkoutResult
+        fields = ('id', 'result_workout_assign_date', 'workout')
+        read_only_fields = ('id', 'result_workout_assign_date', 'workout')
 
+class ExerciseSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Exercise
+        exclude = ('created', 'updated')
+
+class ResultWorkoutDefinitionSerializer(serializers.ModelSerializer):
+    workout_type = serializers.SerializerMethodField('workout_choices_get')
+
+    class Meta:
+        model = WorkoutDefinition
+        fields = ('id', 'workout_type', 'image','caption','workout_nick_name','introduction_header','introduction_textfield','workout_header','workout_content')
+
+    def workout_choices_get(self, obj):
+        return obj.workout_type.type_name
 
 class WorkOutResultSerializer(serializers.ModelSerializer):
-    exercises = serializers.SerializerMethodField()
+    # exercises = serializers.SerializerMethodField()
+    workout = serializers.SerializerMethodField()
+    # exercises = ExerciseSerializer(read_only=True)
     coach = CoachSerializer(read_only=True)
+
+    def get_workout(self, obj):
+        if obj:
+            # logged_in_student = self.context['request'].user.student_user
+            # date_workout_assigned = self.context.get('date_workout_assigned')
+            assigned_workout = list(AssignedWorkout.objects.filter(id=obj.result_workout_assign_date_id))[0]
+            workout = WorkoutDefinition.objects.filter(id=assigned_workout.workout_id)
+            serializer = ResultWorkoutDefinitionSerializer(workout, read_only=True, many=True)
+
+            # exercise_dict['result'] = serializer.data
+            return serializer.data
+        return []
 
     def get_exercises(self, obj):
         if obj:
             exercises = []
             for exercise in obj.exercises.all():
-                exercise_dict = {'id': exercise.id}
-                exercise_dict['exercise_header'] = exercise.exercise_header
+                # exercise_dict = {'id': exercise.id}
+                exercise_dict = {}
                 exercise_dict['exercise_content'] = exercise.exercise_content
-                exercise_dict['exercise_notes'] = exercise.exercise_notes
-                exercise_dict['exercise_type'] = exercise.exercise_type.type_name
 
-                logged_in_student = self.context['request'].user.student_user
-                date_workout_assigned = self.context.get('date_workout_assigned')
-                result_queryset = ExerciseResult.objects.filter(exercise_result_workout_date__assigned_workout__student=logged_in_student,
-                                                 exercise_result_workout_date__assigned_date__year=date_workout_assigned.year,
-                                                 exercise_result_workout_date__assigned_date__month=date_workout_assigned.month,
-                                                 exercise_result_workout_date__assigned_date__day=date_workout_assigned.day,
-                                                 exercise_result_workout_date__assigned_workout__workout=obj,
-                                                 exercise=exercise)
-
-                serializer = ExerciseResultSerializer(result_queryset, read_only=True, many=True)
-                exercise_dict['result'] = serializer.data
-
+                # logged_in_student = self.context['request'].user.student_user
+                # date_workout_assigned = self.context.get('date_workout_assigned')
+                # result_queryset = WorkoutResult.objects.filter(exercise_result_workout_date__assigned_workout__student=logged_in_student,
+                #                                  exercise_result_workout_date__assigned_date__year=date_workout_assigned.year,
+                #                                  exercise_result_workout_date__assigned_date__month=date_workout_assigned.month,
+                #                                  exercise_result_workout_date__assigned_date__day=date_workout_assigned.day,
+                #                                  exercise_result_workout_date__assigned_workout__workout=obj,
+                #                                  exercise=exercise)
+                #
+                # serializer = ExerciseResultSerializer(result_queryset, read_only=True, many=True)
+                # exercise_dict['result'] = serializer.data
+                #
                 exercises.append(exercise_dict)
 
             return exercises
         return []
 
     class Meta:
-        model = WorkoutDefinition
-        exclude = ('created', 'updated', 'assigned_to')
+        model = WorkoutResult
+        exclude = ('created', 'updated')
+        # exclude = ('created', 'updated', 'assigned_to')
 
 
 class PersonalBestSerializer(serializers.ModelSerializer):

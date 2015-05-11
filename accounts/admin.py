@@ -16,3 +16,18 @@ class StudentAdmin(admin.ModelAdmin):
 admin.site.register(AppCoach)
 admin.site.register(AppUser, StudentAdmin)
 admin.site.register(ContactUs)
+
+
+# class AppStudentInline(admin.StackedInline):
+#     model = AppStudent
+#     extra = 1
+#     classes = ('collapse open',)
+#     inline_classes = ('collapse open',)
+#
+# class AppStudentAdmin(admin.ModelAdmin):
+#     inlines = [
+#         AppStudentInline,
+#     ]
+#
+#
+# admin.site.register(AppUser, AppStudentAdmin)

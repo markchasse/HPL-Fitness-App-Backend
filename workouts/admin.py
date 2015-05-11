@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # import from app
-from workouts.models import WorkoutDefinition, AssignedWorkout, AssignedWorkoutDate, ExerciseType, ExerciseResult, \
+from workouts.models import WorkoutDefinition, AssignedWorkout, AssignedWorkoutDate, WorkoutType, WorkoutResult, \
     Exercise, PersonalBest
 
 
@@ -50,7 +50,6 @@ class AssignedWokoutDateInline(admin.StackedInline):
     classes = ('collapse open',)
     inline_classes = ('collapse open',)
 
-
 class AssignedWorkoutAdmin(admin.ModelAdmin):
     inlines = [
         AssignedWokoutDateInline,
@@ -60,6 +59,6 @@ class AssignedWorkoutAdmin(admin.ModelAdmin):
 admin.site.register(WorkoutDefinition)
 admin.site.register(AssignedWorkout, AssignedWorkoutAdmin)
 # admin.site.register(AssignedWorkoutDate)
-admin.site.register(ExerciseResult)
+admin.site.register(WorkoutResult)
 admin.site.register(Exercise)
 admin.site.register(PersonalBest)

@@ -9,7 +9,7 @@ from accounts.models import AppCoach, AppStudent
 from FitnessApp.utils import file_upload_to
 
 
-class ExerciseType(models.Model):
+class WorkoutType(models.Model):
     type_name = models.CharField(max_length=100, unique=True, null=False, blank=False)
     type_description = models.TextField(blank=True, null=True)
 
@@ -23,9 +23,14 @@ class ExerciseType(models.Model):
 class WorkoutDefinition(models.Model):
     image = models.ImageField(upload_to=file_upload_to, blank=True, null=True, default="default/default_image.png")
     caption = models.CharField(verbose_name=_('Image Caption'), null=True, blank=True, max_length=250)
+    workout_nick_name = models.CharField(verbose_name=_('Workout Nick Name'), null=True, blank=True,max_length=200)
+
     introduction_header = models.CharField(verbose_name=_('Introduction Header'), null=False, blank=False,
                                            max_length=500)
     introduction_textfield = models.TextField(verbose_name=_('Introduction Text'))
+
+    workout_header = models.CharField(verbose_name=_('WarmUp Header'), null=True, blank=True, max_length=500)
+    workout_content = models.CharField(verbose_name=_('Workout Content'), null=True, blank=True, max_length=500)
 
     warmup_header = models.CharField(verbose_name=_('WarmUp Header'), null=True, blank=True, max_length=500)
     warmup_content = models.CharField(verbose_name=_('WarmUp content'), null=True, blank=True, max_length=800)
@@ -52,6 +57,7 @@ class WorkoutDefinition(models.Model):
     coach = models.ForeignKey(AppCoach, related_name='coach_defined_workout', null=False)
 
     exercises = models.ManyToManyField('Exercise', related_name='exercise_workout')
+    workout_type = models.ForeignKey(WorkoutType, related_name='type_of_workout', null=False,default=None)
 
     assigned_to = models.ManyToManyField(AppStudent, through='AssignedWorkout', related_name='assigned_workout')
 
@@ -66,10 +72,7 @@ class WorkoutDefinition(models.Model):
 
 
 class Exercise(models.Model):
-    exercise_header = models.CharField(verbose_name=_('Exercise Header'), null=False, blank=False, max_length=500)
     exercise_content = models.CharField(verbose_name=_('Exercise content'), null=True, blank=True, max_length=800)
-    exercise_notes = models.TextField(verbose_name=_('Exercise Notes'))
-    exercise_type = models.ForeignKey(ExerciseType, related_name='type_of_exercise', null=False)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -83,7 +86,7 @@ class Exercise(models.Model):
         return date_var
 
     def __unicode__(self):
-        return self.exercise_header
+        return self.exercise_content
 
 
 class AssignedWorkout(models.Model):
@@ -115,12 +118,12 @@ class AssignedWorkoutDate(models.Model):
         return self.assigned_date.strftime('%Y-%m-%d')
 
 
-class ExerciseResult(models.Model):
-    note = models.CharField(verbose_name=_('Exercise Note'), null=True, blank=True, max_length=1000)
-    time_taken = models.PositiveIntegerField(verbose_name=_('Exercise Time In Seconds'), null=True, blank=True)
-    rounds = models.PositiveSmallIntegerField(verbose_name=_('Exercise Rounds'), null=True, blank=True, max_length=10)
-    exercise = models.ForeignKey(Exercise, related_name="exercise_result", blank=False, null=False)
-    exercise_result_workout_date = models.ForeignKey(AssignedWorkoutDate, related_name="workout_exercise_result",
+class WorkoutResult(models.Model):
+    note = models.CharField(verbose_name=_('Workout Result Note'), null=True, blank=True, max_length=1000)
+    time_taken = models.PositiveIntegerField(verbose_name=_('Workout Time In Seconds'), null=True, blank=True)
+    rounds = models.PositiveSmallIntegerField(verbose_name=_('Workout Rounds'), null=True, blank=True, max_length=10)
+    # workout = models.ForeignKey(Exercise, related_name="workout_result", blank=False, null=False)
+    result_workout_assign_date = models.ForeignKey(AssignedWorkoutDate, related_name="workout_result",
                                                      blank=False, null=False)
     result_submit_date = models.DateField(verbose_name='Result Submitted Date', null=False, blank=False,
                                           default=timezone.now().date())
@@ -129,7 +132,7 @@ class ExerciseResult(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["exercise_result_workout_date"]
+        ordering = ["result_workout_assign_date"]
 
     def __unicode__(self):
         return self.exercise.exercise_header
