@@ -57,8 +57,7 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def get_full_name(self):
-        name = '%s %s %s' % self.first_name, self.last_name
-        return name
+        return ("%s %s" % (self.first_name, self.last_name))
 
     def get_short_name(self):
         return self.first_name
@@ -71,12 +70,18 @@ class AppStudent(models.Model):
     def __unicode__(self):
         return self.app_user.first_name
 
+    def get_full_name(self):
+        return ("%s %s" % (self.app_user.first_name, self.app_user.last_name))
+
 
 class AppCoach(models.Model):
     app_user = models.OneToOneField(AppUser, related_name='coach_user')
 
     def __unicode__(self):
         return self.app_user.first_name
+
+    def get_full_name(self):
+        return ("%s %s" % (self.app_user.first_name, self.app_user.last_name))
 
 
 class PasswordResetRequest(models.Model):

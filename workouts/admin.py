@@ -55,11 +55,77 @@ class AssignedWorkoutAdmin(admin.ModelAdmin):
         AssignedWokoutDateInline,
     ]
 
-# admin.site.register(ExerciseType)
-admin.site.register(WorkoutType)
-admin.site.register(WorkoutDefinition)
 admin.site.register(AssignedWorkout, AssignedWorkoutAdmin)
-# admin.site.register(AssignedWorkoutDate)
-admin.site.register(WorkoutResult)
-admin.site.register(Exercise)
-admin.site.register(PersonalBest)
+
+
+class WorkoutTypeAdmin(admin.ModelAdmin):
+    list_display = ('type_name', 'type_description', 'created',)
+
+admin.site.register(WorkoutType,WorkoutTypeAdmin)
+
+class WorkoutDefinitionAdmin(admin.ModelAdmin):
+    list_display = ('workout_nick_name', 'introduction_header', 'workout_header',
+                    'workout_content','coach_name','workout_type','get_students','get_exercises','created',)
+
+    def coach_name(self, obj):
+        return obj.coach.get_full_name()
+    coach_name.short_description = 'Coach Name'
+
+    def get_exercises(self, obj):
+        return "<br/>".join([p.exercise_content for p in obj.exercises.all()])
+    get_exercises.short_description = 'Exercise List'
+    get_exercises.allow_tags = True
+
+    def get_students(self, obj):
+        return "<br/>".join([p.get_full_name() for p in obj.assigned_to.all()])
+    get_students.short_description = 'Student List'
+    get_students.allow_tags = True
+
+admin.site.register(WorkoutDefinition,WorkoutDefinitionAdmin)
+
+
+class WorkoutResultAdmin(admin.ModelAdmin):
+    list_display = ('workout_name','student_name','time_taken', 'rounds', 'result_submit_date', 'note','result_workout_assign_date',)
+
+    def workout_name(self,obj):
+        return obj.result_workout_assign_date.assigned_workout.workout.workout_nick_name
+    workout_name.short_description = 'Workout Name'
+
+    def student_name(self,obj):
+        return obj.result_workout_assign_date.assigned_workout.student.get_full_name()
+    student_name.short_description = 'Student Name'
+
+admin.site.register(WorkoutResult,WorkoutResultAdmin)
+
+
+class ExerciseAdmin(admin.ModelAdmin):
+    list_display = ('exercise_content','workout_list',)
+
+    def workout_list(self, obj):
+        return "<br/>".join([p.workout_nick_name for p in obj.exercise_workout.all()])
+    workout_list.short_description = 'Workout List'
+    workout_list.allow_tags = True
+
+admin.site.register(Exercise,ExerciseAdmin)
+
+
+class PersonalBestAdmin(admin.ModelAdmin):
+    list_display = ('student_name','workout_name','workout_type','workout_assign_date',)
+
+    def workout_name(self,obj):
+        return obj.workout_assigned_date.assigned_workout.workout.workout_nick_name
+    workout_name.short_description = 'Workout Name'
+
+    def workout_type(self,obj):
+        return obj.workout_assigned_date.assigned_workout.workout.workout_type
+    workout_type.short_description = 'Workout Type'
+
+    def student_name(self,obj):
+        return obj.workout_assigned_date.assigned_workout.student.get_full_name()
+    student_name.short_description = 'Student Name'
+
+    def workout_assign_date(self,obj):
+        return obj.workout_assigned_date.assigned_date.strftime('%Y-%m-%d')
+    workout_assign_date.short_description = 'Workout Assigned Date'
+
+admin.site.register(PersonalBest,PersonalBestAdmin)

@@ -135,7 +135,7 @@ class WorkoutResult(models.Model):
         ordering = ["result_workout_assign_date"]
 
     def __unicode__(self):
-        return self.exercise.exercise_header
+        return self.result_workout_assign_date.assigned_workout.workout.workout_nick_name
 
 
 class PersonalBest(models.Model):
@@ -149,6 +149,10 @@ class PersonalBest(models.Model):
     class Meta:
         ordering = ["updated"]
 
-    def __unicode__(self):
-        return self.workout_assigned_date.assigned_date.strftime('%Y-%m-%d')
+    # def __unicode__(self):
+    #     return ("%s %s" % (self.workout_assigned_date.assigned_workout.workout.workout_nick_name, self.workout_assigned_date.assigned_date.strftime('%Y-%m-%d')))
+
+    # def workout_name(self,obj):
+    #     return obj.workout_assigned_date.assigned_workout.workout.workout_nick_name
+    # workout_name.short_description = 'Workout Name'
 
