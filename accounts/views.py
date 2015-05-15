@@ -44,7 +44,7 @@ class Register(APIView):
         if serializer.is_valid():
             serializer.save()
 
-            if serializer.data['user_role'] == 0:
+            if serializer.data['user_role'] == 'user':
                 try:
                     subscription = UserSubscription.objects.create()
                     AppStudent.objects.create(subscription=subscription, app_user_id=serializer.data['id'])
@@ -102,6 +102,19 @@ class TokenLogin(APIView):
             logger.debug('Invalid data. %s', payload)
             return Response(json.dumps(payload), status=status.HTTP_400_BAD_REQUEST)
 
+class AccountInformation(APIView):
+    permission_classes = (IsAuthenticated, )
+
+    def get(self, request):
+        login_user = request.user
+        if login_user.is_active:
+            serializer = UserSerializer(login_user)
+            logger.debug("account information object: %s", login_user.email)
+            return Response({'success': True, 'user': serializer.data},
+                            status=status.HTTP_200_OK)
+        else:
+            return Response({'success': False, "message":
+                "Your account is not active, Please contact administrator"}, status=status.HTTP_403_FORBIDDEN)
 
 class ChangePassword(APIView):
     permission_classes = (IsAuthenticated, )

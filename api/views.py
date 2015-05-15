@@ -2,6 +2,7 @@ import datetime
 import itertools
 from django.db import transaction
 from django.conf import settings
+from datetime import time
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
@@ -14,11 +15,12 @@ from rest_framework import mixins
 from rest_framework.throttling import ScopedRateThrottle
 
 from api.serializers import SubscriptionSerializers, DefinedWorkoutSerializer, WorkoutResultSerializer,\
-    WorkOutResultDateSerializer, WorkOutResultSerializer, PersonalBestSerializer, ContactUsSerializer
+    WorkOutResultDateSerializer, WorkOutResultSerializer, PersonalBestSerializer, ContactUsSerializer,\
+    LeaderBoardSerializer,WorkoutFormatSerializers
 from FitnessApp.utils import send_custom_email
 from workouts import EXERCISE_TYPE_ROUNDS, EXERCISE_TYPE_TIME
 from workouts.models import WorkoutDefinition, AssignedWorkoutDate, Exercise, WorkoutResult, \
-    PersonalBest
+    PersonalBest,AssignedWorkout
 
 
 #logged in user can check his/her subscription
@@ -33,7 +35,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
 
 #student can get his/her workout details on a date input by the him/her
 class AssignedWorkoutViewSet(ListAPIView):
-    serializer_class = DefinedWorkoutSerializer
+    serializer_class = WorkoutFormatSerializers
     queryset = WorkoutDefinition.objects.all()
 
     def get_queryset(self):
@@ -48,6 +50,29 @@ class AssignedWorkoutViewSet(ListAPIView):
                                        assigned_workouts__student=logged_in_user.student_user)
             return queryset
         return []
+
+    def get(self, request, *args, **kwargs):
+        workout_data = super(AssignedWorkoutViewSet, self).get(request, *args, **kwargs)
+        workout_data = workout_data.data
+        if not workout_data:
+            #write query to get previous workout.
+            current_workout_date = request.QUERY_PARAMS.get('workout_date', None)
+            if current_workout_date:
+                current_workout_date = datetime.datetime.strptime(current_workout_date, '%Y-%m-%d')
+                logged_in_user = self.request.user
+                assigned_workout = AssignedWorkout.objects.filter(assigned_dates__assigned_date__lt=datetime.datetime.combine(
+                    current_workout_date, time.min), student_id=logged_in_user.student_user.id).order_by('-assigned_dates__assigned_date')
+                if assigned_workout:
+                    prev_workout_datetime = assigned_workout[0].assigned_dates.all().filter(assigned_date__lt=datetime.datetime.combine(
+                                            current_workout_date, time.min)).order_by('-assigned_date')
+                    if prev_workout_datetime:
+                        workout_data = []
+                        data = {}
+                        data['prev_workout'] = prev_workout_datetime[0].assigned_date.date()
+                        data['workout'] = []
+                        workout_data.append(data)
+
+        return Response(workout_data, status=status.HTTP_200_OK)
 
 
 def get_value_of_workout_session(results_of_one_workout):
@@ -180,11 +205,7 @@ def workout_result(request):
     date_workout_assigned = datetime.datetime.strptime(date_workout_assigned, '%Y-%m-%d')
     # queryset = WorkoutDefinition.objects.filter(id=workout_id, assigned_workouts__student=logged_in_student)
     queryset = WorkoutResult.objects.filter(result_workout_assign_date_id=workout_id)
-
-    # queryset = list(itertools.chain(WorkoutDefinition.objects.all(), WorkoutResult.objects.all()))
-    # queryset = WorkoutResult.objects.filter(result_workout_assign_date_id=workout_id,result_workout_assign_date__assigned_date=date_workout_assigned)
     if queryset:
-        # serializer = ResultDetailSerializer(queryset, many=True)
         serializer = WorkOutResultSerializer(queryset[0], context={'request': request,
                                                                    'date_workout_assigned': date_workout_assigned})
     else:
@@ -198,6 +219,28 @@ def personal_best(request):
     personal_bests = PersonalBest.objects.filter(student=logged_in_student)
 
     serializer = PersonalBestSerializer(personal_bests, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def leader_board(request):
+    logged_in_student = request.user.student_user
+    workout_date = request.QUERY_PARAMS.get('workout_date', None)
+    if workout_date:
+        workout_date = datetime.datetime.strptime(workout_date, '%Y-%m-%d')
+        queryset = WorkoutDefinition.objects.all()
+        workout = queryset.filter(assigned_workouts__assigned_dates__assigned_date__year=workout_date.year,
+                                   assigned_workouts__assigned_dates__assigned_date__month=workout_date.month,
+                                   assigned_workouts__assigned_dates__assigned_date__day=workout_date.day,
+                                   assigned_workouts__student=logged_in_student)
+
+    serializer = LeaderBoardSerializer(workout, many=True ,context={'request': request})
+    # leaders = None
+    # if workout.workout_type_id == 1:
+    #     leaders = WorkoutResult.objects.filter(result_workout_assign_date__assigned_workout__workout=workout).order_by('-time_taken')[:5]
+    # elif workout.workout_type_id == 0:
+    #     leaders = WorkoutResult.objects.filter(result_workout_assign_date__assigned_workout__workout=workout).order_by('-rounds')[:5]
+    #
+    # serializer = LeaderBoardSerializer(leaders, many=True)
     return Response(serializer.data)
 
 

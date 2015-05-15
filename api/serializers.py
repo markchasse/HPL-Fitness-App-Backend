@@ -26,13 +26,57 @@ class DefinedWorkoutSerializer(serializers.ModelSerializer):
     workout_type = serializers.SerializerMethodField('workout_choices_get')
     exercises = serializers.SerializerMethodField()
     coach = CoachSerializer(read_only=True)
-    next_workout = serializers.SerializerMethodField()
-    current_workout = serializers.SerializerMethodField()
-    prev_workout = serializers.SerializerMethodField()
+    is_result_submit = serializers.SerializerMethodField()
 
     class Meta:
         model = WorkoutDefinition
         exclude = ('created', 'updated', 'assigned_to')
+
+    def get_is_result_submit(self, obj):
+        logged_in_student = self.context['request'].user.student_user
+        workout_date = self.context['request'].QUERY_PARAMS.get('workout_date', None)
+        if workout_date:
+            workout_date = datetime.strptime(workout_date, '%Y-%m-%d')
+            try:
+                result = WorkoutResult.objects.filter(result_workout_assign_date__assigned_workout__workout=obj,
+                                                      result_workout_assign_date__assigned_date__year=workout_date.year,
+                                                      result_workout_assign_date__assigned_date__month=workout_date.month,
+                                                      result_workout_assign_date__assigned_date__day=workout_date.day,
+                                                      result_workout_assign_date__assigned_workout__student=logged_in_student
+                                                      )
+                if result:
+                    return True
+            except WorkoutResult.DoesNotExist:
+                pass
+        return False
+
+    def get_exercises(self, obj):
+        if obj:
+            exercises = []
+            for exercise in obj.exercises.all():
+                exercise_dict = {}
+                exercise_dict['exercise_content'] = exercise.exercise_content
+                exercises.append(exercise_dict)
+
+            return exercises
+        return []
+
+    def workout_choices_get(self, obj):
+         return obj.workout_type.type_name
+
+
+class WorkoutFormatSerializers(serializers.Serializer):
+    next_workout = serializers.SerializerMethodField()
+    current_workout = serializers.SerializerMethodField()
+    prev_workout = serializers.SerializerMethodField()
+    workout = serializers.SerializerMethodField()
+
+    def get_workout(self, obj):
+        if obj:
+            workout = WorkoutDefinition.objects.filter(id=obj.id)
+            serializer = DefinedWorkoutSerializer(workout, many=True,context={'request': self.context['request']})
+            return serializer.data
+        return []
 
     def get_next_workout(self, obj):
         workout_date = self.context['request'].QUERY_PARAMS.get('workout_date', None)
@@ -70,21 +114,6 @@ class DefinedWorkoutSerializer(serializers.ModelSerializer):
                 if prev_workout_datetime:
                     return prev_workout_datetime[0].assigned_date.date()
         return ""
-
-    def get_exercises(self, obj):
-        if obj:
-            exercises = []
-            for exercise in obj.exercises.all():
-                exercise_dict = {}
-                # exercise_dict = {'id': exercise.id}
-                exercise_dict['exercise_content'] = exercise.exercise_content
-                exercises.append(exercise_dict)
-
-            return exercises
-        return []
-
-    def workout_choices_get(self, obj):
-         return obj.workout_type.type_name
 
 
 class SubscriptionSerializers(serializers.ModelSerializer):
@@ -190,22 +219,8 @@ class WorkOutResultSerializer(serializers.ModelSerializer):
         if obj:
             exercises = []
             for exercise in obj.exercises.all():
-                # exercise_dict = {'id': exercise.id}
                 exercise_dict = {}
                 exercise_dict['exercise_content'] = exercise.exercise_content
-
-                # logged_in_student = self.context['request'].user.student_user
-                # date_workout_assigned = self.context.get('date_workout_assigned')
-                # result_queryset = WorkoutResult.objects.filter(exercise_result_workout_date__assigned_workout__student=logged_in_student,
-                #                                  exercise_result_workout_date__assigned_date__year=date_workout_assigned.year,
-                #                                  exercise_result_workout_date__assigned_date__month=date_workout_assigned.month,
-                #                                  exercise_result_workout_date__assigned_date__day=date_workout_assigned.day,
-                #                                  exercise_result_workout_date__assigned_workout__workout=obj,
-                #                                  exercise=exercise)
-                #
-                # serializer = ExerciseResultSerializer(result_queryset, read_only=True, many=True)
-                # exercise_dict['result'] = serializer.data
-                #
                 exercises.append(exercise_dict)
 
             return exercises
@@ -214,7 +229,6 @@ class WorkOutResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkoutResult
         exclude = ('created', 'updated')
-        # exclude = ('created', 'updated', 'assigned_to')
 
 
 class PersonalBestSerializer(serializers.ModelSerializer):
@@ -235,6 +249,57 @@ class PersonalBestSerializer(serializers.ModelSerializer):
         model = PersonalBest
         fields = ('workout_assigned_date', 'workout_id', 'workout_header')
 
+
+class LeaderBoardResultSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    student_avatar = serializers.SerializerMethodField()
+
+    def get_student_name(self,obj):
+        return obj.result_workout_assign_date.assigned_workout.student.get_full_name()
+
+    def get_student_avatar(self,obj):
+        if obj.result_workout_assign_date.assigned_workout.student.app_user.profile_image:
+            return obj.result_workout_assign_date.assigned_workout.student.app_user.profile_image.url
+        else:
+            return None
+
+    class Meta:
+        model = WorkoutResult
+        fields = ('student_name', 'student_avatar', 'time_taken', 'rounds','result_submit_date')
+
+class LeaderBoardSerializer(serializers.ModelSerializer):
+    leader_board = serializers.SerializerMethodField()
+    workout_type = serializers.SerializerMethodField()
+
+    def get_workout_type(self, obj):
+        return obj.workout_type.type_name
+
+    def get_leader_board(self, obj):
+        workout_date = self.context['request'].QUERY_PARAMS.get('workout_date', None)
+        if workout_date:
+            workout_date = datetime.strptime(workout_date, '%Y-%m-%d')
+            if obj:
+                leaders = None
+                if obj.workout_type_id == 1:
+                    leaders = WorkoutResult.objects.filter(result_workout_assign_date__assigned_workout__workout=obj,
+                                                           result_workout_assign_date__assigned_date__year=workout_date.year,
+                                                           result_workout_assign_date__assigned_date__month=workout_date.month,
+                                                           result_workout_assign_date__assigned_date__day=workout_date.day
+                                                            ).order_by('-time_taken')[:5]
+                elif obj.workout_type_id == 2:
+                    leaders = WorkoutResult.objects.filter(result_workout_assign_date__assigned_workout__workout=obj,
+                                                           result_workout_assign_date__assigned_date__year=workout_date.year,
+                                                           result_workout_assign_date__assigned_date__month=workout_date.month,
+                                                           result_workout_assign_date__assigned_date__day=workout_date.day
+                                                        ).order_by('-rounds')[:5]
+
+                serializer = LeaderBoardResultSerializer(leaders, many=True)
+                return serializer.data
+        return []
+
+    class Meta:
+        model = WorkoutDefinition
+        fields = ('workout_type', 'image','caption','workout_nick_name','introduction_header','introduction_textfield','workout_header','workout_content','leader_board')
 
 class ContactUsSerializer(serializers.ModelSerializer):
 
