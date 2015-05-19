@@ -26,7 +26,7 @@ class DefinedWorkoutSerializer(serializers.ModelSerializer):
     workout_type = serializers.SerializerMethodField('workout_choices_get')
     exercises = serializers.SerializerMethodField()
     coach = CoachSerializer(read_only=True)
-    is_result_submit = serializers.SerializerMethodField()
+    # is_result_submit = serializers.SerializerMethodField()
 
     class Meta:
         model = WorkoutDefinition
@@ -82,9 +82,9 @@ class WorkoutFormatSerializers(serializers.Serializer):
         workout_date = self.context['request'].QUERY_PARAMS.get('workout_date', None)
         if workout_date:
             workout_date = datetime.strptime(workout_date, '%Y-%m-%d')
-            logged_in_user = self.context['request'].user
+            logged_in_user_group = self.context['request'].user.groups.all()[0]
             assigned_workout = AssignedWorkout.objects.filter(assigned_dates__assigned_date__gt=datetime.combine(
-                workout_date, time.max), student_id=logged_in_user.student_user.id).order_by('assigned_dates__assigned_date')
+                workout_date, time.max), student_group_id=logged_in_user_group.id).order_by('assigned_dates__assigned_date')
             if assigned_workout:
                 next_workout_datetime = assigned_workout[0].assigned_dates.all().filter(assigned_date__gt=datetime.combine(
                                         workout_date, time.max)).order_by('assigned_date')
@@ -105,9 +105,9 @@ class WorkoutFormatSerializers(serializers.Serializer):
         workout_date = self.context['request'].QUERY_PARAMS.get('workout_date', None)
         if workout_date:
             workout_date = datetime.strptime(workout_date, '%Y-%m-%d')
-            logged_in_user = self.context['request'].user
+            logged_in_user_group = self.context['request'].user.groups.all()[0]
             assigned_workout = AssignedWorkout.objects.filter(assigned_dates__assigned_date__lt=datetime.combine(
-                workout_date, time.min), student_id=logged_in_user.student_user.id).order_by('-assigned_dates__assigned_date')
+                workout_date, time.min), student_group_id=logged_in_user_group.id).order_by('-assigned_dates__assigned_date')
             if assigned_workout:
                 prev_workout_datetime = assigned_workout[0].assigned_dates.all().filter(assigned_date__lt=datetime.combine(
                                         workout_date, time.min)).order_by('-assigned_date')

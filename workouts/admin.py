@@ -1,8 +1,20 @@
 from django.contrib import admin
+from django import forms
+from django.db.models import *
+from tinymce.widgets import TinyMCE
 
 # import from app
 from workouts.models import WorkoutDefinition, AssignedWorkout, AssignedWorkoutDate, WorkoutType, WorkoutResult, \
     Exercise, PersonalBest
+
+class WorkoutDefinitionForm(forms.ModelForm):
+    warmup_content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 15}))
+    substitution_content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 15}))
+    cooldown_content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 15}))
+    extracredit_content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 15}))
+    homework_content = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 15}))
+    class Meta:
+        model = WorkoutDefinition
 
 
 # class WorkoutAdmin(admin.ModelAdmin):
@@ -51,9 +63,19 @@ class AssignedWokoutDateInline(admin.StackedInline):
     inline_classes = ('collapse open',)
 
 class AssignedWorkoutAdmin(admin.ModelAdmin):
+    list_display = ('workout_name','get_groups', 'created',)
     inlines = [
         AssignedWokoutDateInline,
     ]
+
+    def get_groups(self, obj):
+        return "<br/>".join([p.name for p in obj.workout.assigned_to.all()])
+    get_groups.short_description = 'Group List'
+    get_groups.allow_tags = True
+
+    def workout_name(self,obj):
+        return obj.workout.workout_nick_name
+    workout_name.short_description = 'Workout Name'
 
 admin.site.register(AssignedWorkout, AssignedWorkoutAdmin)
 
@@ -64,8 +86,15 @@ class WorkoutTypeAdmin(admin.ModelAdmin):
 admin.site.register(WorkoutType,WorkoutTypeAdmin)
 
 class WorkoutDefinitionAdmin(admin.ModelAdmin):
+    form = WorkoutDefinitionForm
+
     list_display = ('workout_nick_name', 'introduction_header', 'workout_header',
-                    'workout_content','coach_name','workout_type','get_students','get_exercises','created',)
+                    'get_workout_content','coach_name','workout_type','get_groups','get_exercises','created',)
+
+    def get_workout_content(self,obj):
+        return obj.workout_content
+    get_workout_content.short_description = 'Workout Content'
+    get_workout_content.allow_tags = True
 
     def coach_name(self, obj):
         return obj.coach.get_full_name()
@@ -76,10 +105,10 @@ class WorkoutDefinitionAdmin(admin.ModelAdmin):
     get_exercises.short_description = 'Exercise List'
     get_exercises.allow_tags = True
 
-    def get_students(self, obj):
-        return "<br/>".join([p.get_full_name() for p in obj.assigned_to.all()])
-    get_students.short_description = 'Student List'
-    get_students.allow_tags = True
+    def get_groups(self, obj):
+        return "<br/>".join([p.name for p in obj.assigned_to.all()])
+    get_groups.short_description = 'Group List'
+    get_groups.allow_tags = True
 
 admin.site.register(WorkoutDefinition,WorkoutDefinitionAdmin)
 

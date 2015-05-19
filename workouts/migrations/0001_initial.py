@@ -4,12 +4,15 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 import datetime
 import FitnessApp.utils
+import tinymce.models
+import django.core.validators
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0001_initial'),
+        ('auth', '0001_initial'),
+        ('accounts', '0002_auto_20150519_1558'),
     ]
 
     operations = [
@@ -19,7 +22,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
-                ('student', models.ForeignKey(related_name='student_assigned_workout', to='accounts.AppStudent')),
+                ('student_group', models.ForeignKey(related_name='group_assigned_workout', to='auth.Group')),
             ],
             options={
                 'ordering': ['updated'],
@@ -45,6 +48,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('exercise_content', models.CharField(max_length=800, null=True, verbose_name='Exercise content', blank=True)),
+                ('exercise_url', models.TextField(blank=True, null=True, validators=[django.core.validators.URLValidator()])),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
             ],
@@ -76,11 +80,12 @@ class Migration(migrations.Migration):
                 ('workout_nick_name', models.CharField(max_length=200, null=True, verbose_name='Workout Nick Name', blank=True)),
                 ('introduction_header', models.CharField(max_length=500, verbose_name='Introduction Header')),
                 ('introduction_textfield', models.TextField(verbose_name='Introduction Text')),
-                ('workout_header', models.CharField(max_length=500, null=True, verbose_name='WarmUp Header', blank=True)),
-                ('workout_content', models.CharField(max_length=500, null=True, verbose_name='Workout Content', blank=True)),
                 ('warmup_header', models.CharField(max_length=500, null=True, verbose_name='WarmUp Header', blank=True)),
                 ('warmup_content', models.CharField(max_length=800, null=True, verbose_name='WarmUp content', blank=True)),
                 ('warmup_notes', models.TextField(null=True, verbose_name='WarmUp Notes', blank=True)),
+                ('workout_header', models.CharField(max_length=500, null=True, verbose_name='Workout Header', blank=True)),
+                ('workout_content', tinymce.models.HTMLField(max_length=500, null=True, verbose_name='Workout Content', blank=True)),
+                ('workout_notes', models.TextField(null=True, verbose_name='Workout Notes', blank=True)),
                 ('substitution_header', models.CharField(max_length=500, null=True, verbose_name='Substitution Header', blank=True)),
                 ('substitution_content', models.CharField(max_length=800, null=True, verbose_name='Substitution content', blank=True)),
                 ('substitution_notes', models.TextField(null=True, verbose_name='Substitution Notes', blank=True)),
@@ -95,7 +100,7 @@ class Migration(migrations.Migration):
                 ('homework_notes', models.TextField(null=True, verbose_name='Homework Notes', blank=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
-                ('assigned_to', models.ManyToManyField(related_name='assigned_workout', through='workouts.AssignedWorkout', to='accounts.AppStudent')),
+                ('assigned_to', models.ManyToManyField(related_name='assigned_workout', through='workouts.AssignedWorkout', to='auth.Group')),
                 ('coach', models.ForeignKey(related_name='coach_defined_workout', to='accounts.AppCoach')),
                 ('exercises', models.ManyToManyField(related_name='exercise_workout', to='workouts.Exercise')),
             ],
@@ -111,10 +116,11 @@ class Migration(migrations.Migration):
                 ('note', models.CharField(max_length=1000, null=True, verbose_name='Workout Result Note', blank=True)),
                 ('time_taken', models.PositiveIntegerField(null=True, verbose_name='Workout Time In Seconds', blank=True)),
                 ('rounds', models.PositiveSmallIntegerField(max_length=10, null=True, verbose_name='Workout Rounds', blank=True)),
-                ('result_submit_date', models.DateField(default=datetime.date(2015, 5, 11), verbose_name=b'Result Submitted Date')),
+                ('result_submit_date', models.DateField(default=datetime.date(2015, 5, 19), verbose_name=b'Result Submitted Date')),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
                 ('result_workout_assign_date', models.ForeignKey(related_name='workout_result', to='workouts.AssignedWorkoutDate')),
+                ('workout_user', models.ForeignKey(related_name='workout_result_user', to='accounts.AppStudent')),
             ],
             options={
                 'ordering': ['result_workout_assign_date'],
@@ -148,6 +154,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='assignedworkout',
-            unique_together=set([('student', 'workout')]),
+            unique_together=set([('student_group', 'workout')]),
         ),
     ]

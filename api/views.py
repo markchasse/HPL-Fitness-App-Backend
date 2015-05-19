@@ -39,7 +39,7 @@ class AssignedWorkoutViewSet(ListAPIView):
     queryset = WorkoutDefinition.objects.all()
 
     def get_queryset(self):
-        logged_in_user = self.request.user
+        logged_in_user_group = self.request.user.groups.all()[0]
         queryset = super(AssignedWorkoutViewSet, self).get_queryset()
         workout_date = self.request.QUERY_PARAMS.get('workout_date', None)
         if workout_date:
@@ -47,7 +47,7 @@ class AssignedWorkoutViewSet(ListAPIView):
             queryset = queryset.filter(assigned_workouts__assigned_dates__assigned_date__year=workout_date.year,
                                        assigned_workouts__assigned_dates__assigned_date__month=workout_date.month,
                                        assigned_workouts__assigned_dates__assigned_date__day=workout_date.day,
-                                       assigned_workouts__student=logged_in_user.student_user)
+                                       assigned_workouts__student_group=logged_in_user_group)
             return queryset
         return []
 
@@ -59,9 +59,9 @@ class AssignedWorkoutViewSet(ListAPIView):
             current_workout_date = request.QUERY_PARAMS.get('workout_date', None)
             if current_workout_date:
                 current_workout_date = datetime.datetime.strptime(current_workout_date, '%Y-%m-%d')
-                logged_in_user = self.request.user
+                logged_in_user_group = self.request.user.groups.all()[0]
                 assigned_workout = AssignedWorkout.objects.filter(assigned_dates__assigned_date__lt=datetime.datetime.combine(
-                    current_workout_date, time.min), student_id=logged_in_user.student_user.id).order_by('-assigned_dates__assigned_date')
+                    current_workout_date, time.min), student_group_id=logged_in_user_group.id).order_by('-assigned_dates__assigned_date')
                 if assigned_workout:
                     prev_workout_datetime = assigned_workout[0].assigned_dates.all().filter(assigned_date__lt=datetime.datetime.combine(
                                             current_workout_date, time.min)).order_by('-assigned_date')

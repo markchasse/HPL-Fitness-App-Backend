@@ -56,6 +56,10 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
+    class Meta:
+        verbose_name = 'Fitness Application User'
+        verbose_name_plural = 'Fitness Application Users'
+
     def get_full_name(self):
         return ("%s %s" % (self.first_name, self.last_name))
 

@@ -1,6 +1,7 @@
 
 
 from rest_framework import serializers
+from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -35,6 +36,14 @@ class UserSerializer(serializers.ModelSerializer):
         user = super(UserSerializer,self).create(validated_data)
         # call set_password on user object. Without this
         # the password will be stored in plain text.
+        try:
+            if user.user_role == 0:
+                if not Group.objects.filter(name='Free').exists():
+                    Group.objects.create(name='Free')
+                group = Group.objects.get(name='Free')
+                user.groups.add(group)
+        except Exception as ex:
+            pass
         user.set_password(validated_data['password'])
         user.save()
         return user

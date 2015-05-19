@@ -92,6 +92,7 @@ INSTALLED_APPS = (
 
     'rest_framework.authtoken',
     'storages',
+    'tinymce',
 )
 
 GRAPPELLI_ADMIN_TITLE = 'Fitness Admin'
@@ -206,6 +207,9 @@ LOGGING = {
     },
 }
 
+TINYMCE_SPELLCHECKER = True
+TINYMCE_COMPRESSOR = True
+
 AWS_HEADERS = {  # see http://developer.yahoo.com/performance/rules.html#expires
     'Expires': 'Thu, 31 Dec 2099 20:00:00 GMT',
     'Cache-Control': 'max-age=94608000',
@@ -225,6 +229,14 @@ DEFAULT_FILE_STORAGE = 'FitnessApp.custom_storages.MediaStorage'
 
 DEFAULT_FROM_EMAIL = "admin@hplfitnessapp.com"
 DEFAULT_TO_EMAIL = "mchasse@gmail.com"
+
+TINYMCE_JS_URL = "%stiny_mce/tiny_mce_src.js" % STATIC_URL
+TINYMCE_DEFAULT_CONFIG = {
+    'plugins': "table,spellchecker,paste,searchreplace",
+    'theme': "advanced",
+    'cleanup_on_startup': True,
+    'custom_undo_redo_levels': 10,
+}
 
 try:
     from local_settings import *

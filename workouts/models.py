@@ -1,12 +1,16 @@
 from datetime import datetime
 
+from django.core.validators import URLValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
+from tinymce import models as tinymce_models
 
 # import from project
 from accounts.models import AppCoach, AppStudent
 from FitnessApp.utils import file_upload_to
+
+from django.contrib.auth.models import Group
 
 
 class WorkoutType(models.Model):
@@ -25,16 +29,17 @@ class WorkoutDefinition(models.Model):
     caption = models.CharField(verbose_name=_('Image Caption'), null=True, blank=True, max_length=250)
     workout_nick_name = models.CharField(verbose_name=_('Workout Nick Name'), null=True, blank=True,max_length=200)
 
-    introduction_header = models.CharField(verbose_name=_('Introduction Header'), null=False, blank=False,
-                                           max_length=500)
+    introduction_header = models.CharField(verbose_name=_('Introduction Header'), null=False, blank=False,max_length=500)
     introduction_textfield = models.TextField(verbose_name=_('Introduction Text'))
-
-    workout_header = models.CharField(verbose_name=_('WarmUp Header'), null=True, blank=True, max_length=500)
-    workout_content = models.CharField(verbose_name=_('Workout Content'), null=True, blank=True, max_length=500)
 
     warmup_header = models.CharField(verbose_name=_('WarmUp Header'), null=True, blank=True, max_length=500)
     warmup_content = models.CharField(verbose_name=_('WarmUp content'), null=True, blank=True, max_length=800)
     warmup_notes = models.TextField(verbose_name=_('WarmUp Notes'), null=True, blank=True)
+
+    workout_header = models.CharField(verbose_name=_('Workout Header'), null=True, blank=True, max_length=500)
+    # workout_content = models.CharField(verbose_name=_('Workout Content'), null=True, blank=True, max_length=500)
+    workout_content = tinymce_models.HTMLField(verbose_name=_('Workout Content'), null=True, blank=True, max_length=500)
+    workout_notes = models.TextField(verbose_name=_('Workout Notes'), null=True, blank=True)
 
     substitution_header = models.CharField(verbose_name=_('Substitution Header'), null=True, blank=True,
                                            max_length=500)
@@ -59,7 +64,7 @@ class WorkoutDefinition(models.Model):
     exercises = models.ManyToManyField('Exercise', related_name='exercise_workout')
     workout_type = models.ForeignKey(WorkoutType, related_name='type_of_workout', null=False,default=None)
 
-    assigned_to = models.ManyToManyField(AppStudent, through='AssignedWorkout', related_name='assigned_workout')
+    assigned_to = models.ManyToManyField(Group, through='AssignedWorkout', related_name='assigned_workout')
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -73,6 +78,7 @@ class WorkoutDefinition(models.Model):
 
 class Exercise(models.Model):
     exercise_content = models.CharField(verbose_name=_('Exercise content'), null=True, blank=True, max_length=800)
+    exercise_url = models.TextField(validators=[URLValidator()], null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -90,7 +96,8 @@ class Exercise(models.Model):
 
 
 class AssignedWorkout(models.Model):
-    student = models.ForeignKey(AppStudent, related_name='student_assigned_workout', null=False)
+    # student = models.ForeignKey(AppStudent, related_name='student_assigned_workout', null=False)
+    student_group = models.ForeignKey(Group, related_name='group_assigned_workout', null=False)
     workout = models.ForeignKey(WorkoutDefinition, related_name='assigned_workouts', null=False)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -98,7 +105,7 @@ class AssignedWorkout(models.Model):
 
     class Meta:
         ordering = ["updated"]
-        unique_together = ('student', 'workout')
+        unique_together = ('student_group', 'workout')
 
     def __unicode__(self):
         return self.workout.introduction_header
@@ -122,7 +129,7 @@ class WorkoutResult(models.Model):
     note = models.CharField(verbose_name=_('Workout Result Note'), null=True, blank=True, max_length=1000)
     time_taken = models.PositiveIntegerField(verbose_name=_('Workout Time In Seconds'), null=True, blank=True)
     rounds = models.PositiveSmallIntegerField(verbose_name=_('Workout Rounds'), null=True, blank=True, max_length=10)
-    # workout = models.ForeignKey(Exercise, related_name="workout_result", blank=False, null=False)
+    workout_user = models.ForeignKey(AppStudent, related_name="workout_result_user", blank=False, null=False)
     result_workout_assign_date = models.ForeignKey(AssignedWorkoutDate, related_name="workout_result",
                                                      blank=False, null=False)
     result_submit_date = models.DateField(verbose_name='Result Submitted Date', null=False, blank=False,
