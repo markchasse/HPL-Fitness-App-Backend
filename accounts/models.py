@@ -70,6 +70,8 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
 class AppStudent(models.Model):
     app_user = models.OneToOneField(AppUser, related_name='student_user')
     subscription = models.OneToOneField("UserSubscription", related_name='subscription_student')
+    parse_installation_id = models.CharField(max_length=100, null=True, blank=True)
+    apple_subscription_id = models.CharField(max_length=100, null=True, blank=True)
 
     def __unicode__(self):
         return self.app_user.first_name

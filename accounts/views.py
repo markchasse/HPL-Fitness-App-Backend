@@ -204,3 +204,72 @@ def my_random_string(string_length=7):
         if not duplicate_check:
             return my_hash
             break;        #although code will never reach here :)
+
+
+
+class ParseInstallation(APIView):
+    permission_classes = (IsAuthenticated, )
+
+    def post(self, request):
+        data = request.DATA
+        if not data['parse_installation_id']:
+            return Response({"message": "Parse installation id is required", 'success': False}, status=status.HTTP_200_OK)
+        try:
+            user = self.request.user
+            student = AppStudent.objects.get(app_user=user)
+            student.parse_installation_id = data['parse_installation_id']
+            student.save()
+            return Response(SUCCESS_DICT,status=status.HTTP_200_OK)
+        except Exception as ex:
+            return Response({"message": "Error saving parse installation id", 'success':False}, status=status.HTTP_200_OK)
+
+
+    def get(self, request):
+        login_user = request.user
+        if login_user.is_active:
+            try:
+                student = AppStudent.objects.get(app_user=login_user)
+                logger.debug("Parse installation id: %s", login_user.email)
+                return Response({'success': True, 'parse_installation_id': student.parse_installation_id},
+                                status=status.HTTP_200_OK) if student.parse_installation_id else Response({'success': False,
+                               'message': 'You don not have parse subscription.'},status=status.HTTP_200_OK)
+            except Exception as ex:
+                return Response({"message": "Error getting parse installation id", 'success':False}, status=status.HTTP_200_OK)
+        else:
+            return Response({'success': False, "message":
+                "Your account is not active, Please contact administrator"}, status=status.HTTP_403_FORBIDDEN)
+
+
+class AppleSubscription(APIView):
+    permission_classes = (IsAuthenticated, )
+
+    def post(self, request):
+        data = request.DATA
+        if not data['apple_subscription_id']:
+            return Response({"message": "Apple subscription id is required", 'success': False}, status=status.HTTP_200_OK)
+        try:
+            user = self.request.user
+            student = AppStudent.objects.get(app_user=user)
+            student.apple_subscription_id = data['apple_subscription_id']
+            subscription = UserSubscription.objects.get(id=student.subscription_id)
+            subscription.subscription_choices = 2
+            subscription.save()
+            student.save()
+            return Response(SUCCESS_DICT,status=status.HTTP_200_OK)
+        except Exception as ex:
+            return Response({"message": "Error saving Apple subscription id", 'success':False}, status=status.HTTP_200_OK)
+
+    def get(self, request):
+        login_user = request.user
+        if login_user.is_active:
+            try:
+                student = AppStudent.objects.get(app_user=login_user)
+                logger.debug("Apple subscription id: %s", login_user.email)
+                return Response({'success': True, 'apple_subscription_id': student.apple_subscription_id},
+                                status=status.HTTP_200_OK) if student.apple_subscription_id else Response({'success': False,
+                               'message': 'You don not have parse subscription.'},status=status.HTTP_200_OK)
+            except Exception as ex:
+                return Response({"message": "Error getting Apple subscription id", 'success':False}, status=status.HTTP_200_OK)
+        else:
+            return Response({'success': False, "message":
+                "Your account is not active, Please contact administrator"}, status=status.HTTP_403_FORBIDDEN)

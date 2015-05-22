@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, url
-from accounts.views import Register, TokenLogin,DeleteAccount,ChangePassword,ForgetPasswordEmail, ResetPassword, AccountInformation
+from accounts.views import Register, TokenLogin,DeleteAccount,ChangePassword,ForgetPasswordEmail,\
+    ResetPassword, AccountInformation, ParseInstallation, AppleSubscription
 
 urlpatterns = patterns('',
     url(r'^register/$', Register.as_view(), name='register_user'),
@@ -9,5 +10,7 @@ urlpatterns = patterns('',
     url(r'^forget_password/$', ForgetPasswordEmail.as_view()),
     url(r'^reset_password/$', ResetPassword.as_view()),
     url(r'^delete_account/$', DeleteAccount.as_view()),
+    url(r'^parse_installation/$', ParseInstallation.as_view()),
+    url(r'^apple_subscription/$', AppleSubscription.as_view()),
 
 )
