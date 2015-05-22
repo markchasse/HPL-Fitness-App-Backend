@@ -13,3 +13,4 @@ requests-oauthlib==0.4.2
 six==1.9.0
 django-storages==1.1.8
 boto==2.38.0
+django-tinymce==1.5.3
