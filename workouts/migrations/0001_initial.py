@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('auth', '0001_initial'),
-        ('accounts', '0002_auto_20150519_1558'),
+        ('accounts', '0001_initial'),
     ]
 
     operations = [
@@ -116,7 +116,7 @@ class Migration(migrations.Migration):
                 ('note', models.CharField(max_length=1000, null=True, verbose_name='Workout Result Note', blank=True)),
                 ('time_taken', models.PositiveIntegerField(null=True, verbose_name='Workout Time In Seconds', blank=True)),
                 ('rounds', models.PositiveSmallIntegerField(max_length=10, null=True, verbose_name='Workout Rounds', blank=True)),
-                ('result_submit_date', models.DateField(default=datetime.date(2015, 5, 19), verbose_name=b'Result Submitted Date')),
+                ('result_submit_date', models.DateField(default=datetime.date(2015, 5, 22), verbose_name=b'Result Submitted Date')),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
                 ('result_workout_assign_date', models.ForeignKey(related_name='workout_result', to='workouts.AssignedWorkoutDate')),

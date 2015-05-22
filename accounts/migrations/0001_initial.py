@@ -34,7 +34,8 @@ class Migration(migrations.Migration):
                 ('user_permissions', models.ManyToManyField(related_query_name='user', related_name='user_set', to='auth.Permission', blank=True, help_text='Specific permissions for this user.', verbose_name='user permissions')),
             ],
             options={
-                'abstract': False,
+                'verbose_name': 'Fitness Application User',
+                'verbose_name_plural': 'Fitness Application Users',
             },
             bases=(models.Model,),
         ),
@@ -52,6 +53,8 @@ class Migration(migrations.Migration):
             name='AppStudent',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('parse_installation_id', models.CharField(max_length=100, null=True, blank=True)),
+                ('apple_subscription_id', models.CharField(max_length=100, null=True, blank=True)),
                 ('app_user', models.OneToOneField(related_name='student_user', to=settings.AUTH_USER_MODEL)),
             ],
             options={
