@@ -4,13 +4,9 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
 from utils import file_upload_to
-
-
 User = 0
 Coach = 1
 Admin = 2
-
-
 class AuthUserManager(BaseUserManager):
     def _create_user(self, email, password, is_staff, is_superuser,
                      user_role=User, **extra_fields):
@@ -33,6 +29,9 @@ class AuthUserManager(BaseUserManager):
 
 
 class AppUser(AbstractBaseUser, PermissionsMixin):
+    User = 0
+    Coach = 1
+    Admin = 2
 
     first_name = models.CharField(verbose_name=_("First Name"), max_length=50)
     last_name = models.CharField(verbose_name=_("Last Name"), max_length=50)
@@ -88,6 +87,24 @@ class AppCoach(models.Model):
 
     def get_full_name(self):
         return ("%s %s" % (self.app_user.first_name, self.app_user.last_name))
+
+
+
+class FitnessAppStudent(AppUser):
+    """
+        This model is created because Models can not be registered twice in django admin. This is a workaround for
+        that since we just create a proxy model which does not create any columns in database.
+    """
+    class Meta:
+        proxy = True
+
+class FitnessAppCoach(AppUser):
+    """
+        This model is created because Models can not be registered twice in django admin. This is a workaround for
+        that since we just create a proxy model which does not create any columns in database.
+    """
+    class Meta:
+        proxy = True
 
 
 class PasswordResetRequest(models.Model):

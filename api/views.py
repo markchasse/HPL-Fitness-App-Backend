@@ -116,7 +116,8 @@ class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Lis
         logged_in_student = self.request.user.student_user
         result_workout_id = self.request.QUERY_PARAMS.get('id', None)
         queryset = super(ResultViewSet, self).get_queryset()
-        queryset = queryset.filter(result_workout_assign_date__assigned_workout__student=logged_in_student)
+        # queryset = queryset.filter(result_workout_assign_date__assigned_workout__student=logged_in_student)
+        queryset = queryset.filter(workout_user=logged_in_student)
         if result_workout_id:
             return queryset.filter(id=result_workout_id)
         queryset = queryset.order_by('result_workout_assign_date_id').distinct('result_workout_assign_date')
@@ -124,6 +125,7 @@ class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Lis
 
     def create(self, request, **kwargs):
         logged_in_student = self.request.user.student_user
+        logged_in_student_group = self.request.user.groups.all()[0]
         requestData = request.data
 
         workout_assign_date = requestData['workout_assign_date']
@@ -140,7 +142,7 @@ class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Lis
         else:
             return Response({'success': False, 'detail': '"workout" is a required parameter.'},status=status.HTTP_404_NOT_FOUND)
 
-        assigned_workout_date_id = AssignedWorkoutDate.objects.filter(assigned_workout__student=logged_in_student,
+        assigned_workout_date_id = AssignedWorkoutDate.objects.filter(assigned_workout__student_group=logged_in_student_group,
                                                                           assigned_workout__workout=workout,
                                                                           assigned_date__year=workout_assign_date.year,
                                                                           assigned_date__month=workout_assign_date.month,
@@ -149,6 +151,7 @@ class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Lis
             return Response({'success': False, 'detail': 'Invalid workout_assign_date .'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             requestData['result_workout_assign_date'] = assigned_workout_date_id[0].id
+            requestData['workout_user'] = logged_in_student.id
         serializer = WorkoutResultSerializer(data=requestData)
         if not serializer.is_valid():
             return Response({'success': False, 'detail': serializer.errors},status=status.HTTP_400_BAD_REQUEST)
@@ -195,16 +198,16 @@ class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Lis
 @api_view(['GET'])
 def workout_result(request):
     logged_in_student = request.user.student_user
-    workout_id = request.QUERY_PARAMS.get('id', None)
+    result_id = request.QUERY_PARAMS.get('id', None)
     date_workout_assigned = request.QUERY_PARAMS.get('date', None)
-    if not workout_id:
-        return Response({'success': False, 'detail': 'id is a required parameter.'})
+    if not result_id:
+        return Response({'success': False, 'detail': 'result_id is a required parameter.'})
     if not date_workout_assigned:
         return Response({'success': False, 'detail': 'date is a required parameter.'})
 
     date_workout_assigned = datetime.datetime.strptime(date_workout_assigned, '%Y-%m-%d')
     # queryset = WorkoutDefinition.objects.filter(id=workout_id, assigned_workouts__student=logged_in_student)
-    queryset = WorkoutResult.objects.filter(result_workout_assign_date_id=workout_id)
+    queryset = WorkoutResult.objects.filter(id=result_id,workout_user=logged_in_student)
     if queryset:
         serializer = WorkOutResultSerializer(queryset[0], context={'request': request,
                                                                    'date_workout_assigned': date_workout_assigned})
@@ -223,7 +226,7 @@ def personal_best(request):
 
 @api_view(['GET'])
 def leader_board(request):
-    logged_in_student = request.user.student_user
+    logged_in_student_group = request.user.student_user
     workout_date = request.QUERY_PARAMS.get('workout_date', None)
     if workout_date:
         workout_date = datetime.datetime.strptime(workout_date, '%Y-%m-%d')
@@ -231,16 +234,9 @@ def leader_board(request):
         workout = queryset.filter(assigned_workouts__assigned_dates__assigned_date__year=workout_date.year,
                                    assigned_workouts__assigned_dates__assigned_date__month=workout_date.month,
                                    assigned_workouts__assigned_dates__assigned_date__day=workout_date.day,
-                                   assigned_workouts__student=logged_in_student)
+                                   assigned_workouts__student_group=logged_in_student_group)
 
     serializer = LeaderBoardSerializer(workout, many=True ,context={'request': request})
-    # leaders = None
-    # if workout.workout_type_id == 1:
-    #     leaders = WorkoutResult.objects.filter(result_workout_assign_date__assigned_workout__workout=workout).order_by('-time_taken')[:5]
-    # elif workout.workout_type_id == 0:
-    #     leaders = WorkoutResult.objects.filter(result_workout_assign_date__assigned_workout__workout=workout).order_by('-rounds')[:5]
-    #
-    # serializer = LeaderBoardSerializer(leaders, many=True)
     return Response(serializer.data)
 
 

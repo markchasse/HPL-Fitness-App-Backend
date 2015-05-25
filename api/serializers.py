@@ -140,7 +140,7 @@ class WorkoutResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WorkoutResult
-        fields = ('id', 'time_taken', 'rounds','note', 'result_workout_assign_date')
+        fields = ('id', 'workout_user','time_taken', 'rounds','note', 'result_workout_assign_date')
         read_only_fields = ('id',)
         write_only_fields = ('result_workout_assign_date',)
 
@@ -205,13 +205,9 @@ class WorkOutResultSerializer(serializers.ModelSerializer):
 
     def get_workout(self, obj):
         if obj:
-            # logged_in_student = self.context['request'].user.student_user
-            # date_workout_assigned = self.context.get('date_workout_assigned')
             assigned_workout = list(AssignedWorkout.objects.filter(id=obj.result_workout_assign_date_id))[0]
             workout = WorkoutDefinition.objects.filter(id=assigned_workout.workout_id)
             serializer = ResultWorkoutDefinitionSerializer(workout, read_only=True, many=True)
-
-            # exercise_dict['result'] = serializer.data
             return serializer.data
         return []
 
@@ -255,11 +251,11 @@ class LeaderBoardResultSerializer(serializers.ModelSerializer):
     student_avatar = serializers.SerializerMethodField()
 
     def get_student_name(self,obj):
-        return obj.result_workout_assign_date.assigned_workout.student.get_full_name()
+        return obj.workout_user.get_full_name()
 
     def get_student_avatar(self,obj):
-        if obj.result_workout_assign_date.assigned_workout.student.app_user.profile_image:
-            return obj.result_workout_assign_date.assigned_workout.student.app_user.profile_image.url
+        if obj.workout_user.app_user.profile_image:
+            return obj.workout_user.app_user.profile_image.url
         else:
             return None
 

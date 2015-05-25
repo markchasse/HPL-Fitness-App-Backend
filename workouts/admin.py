@@ -121,7 +121,7 @@ class WorkoutResultAdmin(admin.ModelAdmin):
     workout_name.short_description = 'Workout Name'
 
     def student_name(self,obj):
-        return obj.result_workout_assign_date.assigned_workout.student.get_full_name()
+        return obj.workout_user.get_full_name()
     student_name.short_description = 'Student Name'
 
 admin.site.register(WorkoutResult,WorkoutResultAdmin)
@@ -150,7 +150,7 @@ class PersonalBestAdmin(admin.ModelAdmin):
     workout_type.short_description = 'Workout Type'
 
     def student_name(self,obj):
-        return obj.workout_assigned_date.assigned_workout.student.get_full_name()
+        return obj.student.get_full_name()
     student_name.short_description = 'Student Name'
 
     def workout_assign_date(self,obj):
