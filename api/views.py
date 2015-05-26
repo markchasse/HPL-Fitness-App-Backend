@@ -14,12 +14,12 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework import mixins
 from rest_framework.throttling import ScopedRateThrottle
 
-from api.serializers import SubscriptionSerializers, DefinedWorkoutSerializer, WorkoutResultSerializer,\
+from api.serializers import SubscriptionSerializers, WorkoutResultSerializer,\
     WorkOutResultDateSerializer, WorkOutResultSerializer, PersonalBestSerializer, ContactUsSerializer,\
     LeaderBoardSerializer,WorkoutFormatSerializers
 from FitnessApp.utils import send_custom_email
 from workouts import EXERCISE_TYPE_ROUNDS, EXERCISE_TYPE_TIME
-from workouts.models import WorkoutDefinition, AssignedWorkoutDate, Exercise, WorkoutResult, \
+from workouts.models import WorkoutDefinition, AssignedWorkoutDate, WorkoutResult, \
     PersonalBest,AssignedWorkout
 
 
@@ -29,7 +29,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
 
     def get(self, request, pk=None, **kwargs):
         logged_in_student = self.request.user.student_user
-        serializer = SubscriptionSerializers(logged_in_student.subscription)
+        serializer = SubscriptionSerializers(logged_in_student)
         return Response(serializer.data)
 
 
@@ -54,6 +54,17 @@ class AssignedWorkoutViewSet(ListAPIView):
     def get(self, request, *args, **kwargs):
         workout_data = super(AssignedWorkoutViewSet, self).get(request, *args, **kwargs)
         workout_data = workout_data.data
+        logged_in_user_subscription = self.request.user.student_user.subscription_choices
+
+        if logged_in_user_subscription == 1:
+            res = []
+            data = {}
+            data['success'] = False
+            data['detail'] = 'kindly subscribe first to get workouts.'
+            res.append(data)
+            return Response(res, status=status.HTTP_200_OK)
+
+
         if not workout_data:
             #write query to get previous workout.
             current_workout_date = request.QUERY_PARAMS.get('workout_date', None)
@@ -151,7 +162,7 @@ class ResultViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Lis
             return Response({'success': False, 'detail': 'Invalid workout_assign_date .'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             requestData['result_workout_assign_date'] = assigned_workout_date_id[0].id
-            requestData['workout_user'] = logged_in_student.id
+            requestData['workout_user'] = logged_in_student.pk
         serializer = WorkoutResultSerializer(data=requestData)
         if not serializer.is_valid():
             return Response({'success': False, 'detail': serializer.errors},status=status.HTTP_400_BAD_REQUEST)
@@ -226,7 +237,7 @@ def personal_best(request):
 
 @api_view(['GET'])
 def leader_board(request):
-    logged_in_student_group = request.user.student_user
+    logged_in_student_group = request.user.groups.all()[0]
     workout_date = request.QUERY_PARAMS.get('workout_date', None)
     if workout_date:
         workout_date = datetime.datetime.strptime(workout_date, '%Y-%m-%d')

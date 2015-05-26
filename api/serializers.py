@@ -2,7 +2,7 @@ from datetime import datetime
 from datetime import time
 from rest_framework import serializers
 
-from accounts.models import AppUser, UserSubscription, AppCoach, ContactUs
+from accounts.models import AppUser, AppCoach, ContactUs, AppStudent
 from workouts.models import WorkoutResult, AssignedWorkout, WorkoutDefinition, PersonalBest, Exercise
 from workouts import EXERCISE_TYPE_TIME, EXERCISE_TYPE_ROUNDS
 
@@ -121,7 +121,7 @@ class SubscriptionSerializers(serializers.ModelSerializer):
     created = serializers.SerializerMethodField('created_get')
 
     class Meta:
-        model = UserSubscription
+        model = AppStudent
         fields = ('subscription_choices','created')
 
     def subscription_choices_get(self, obj):
@@ -131,7 +131,7 @@ class SubscriptionSerializers(serializers.ModelSerializer):
              return "Paid"
 
     def created_get(self,obj):
-        now = obj.created
+        now = obj.updated
         date_var = datetime.date(now)
         return date_var
 
@@ -205,8 +205,7 @@ class WorkOutResultSerializer(serializers.ModelSerializer):
 
     def get_workout(self, obj):
         if obj:
-            assigned_workout = list(AssignedWorkout.objects.filter(id=obj.result_workout_assign_date_id))[0]
-            workout = WorkoutDefinition.objects.filter(id=assigned_workout.workout_id)
+            workout = WorkoutDefinition.objects.filter(id=obj.result_workout_assign_date.assigned_workout.workout_id)
             serializer = ResultWorkoutDefinitionSerializer(workout, read_only=True, many=True)
             return serializer.data
         return []

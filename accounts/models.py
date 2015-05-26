@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
+
 from utils import file_upload_to
 User = 0
 Coach = 1
@@ -67,10 +68,22 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
 
 
 class AppStudent(models.Model):
-    app_user = models.OneToOneField(AppUser, related_name='student_user')
-    subscription = models.OneToOneField("UserSubscription", related_name='subscription_student')
+    app_user = models.OneToOneField(AppUser, related_name='student_user',primary_key=True)
     parse_installation_id = models.CharField(max_length=100, null=True, blank=True)
     apple_subscription_id = models.CharField(max_length=100, null=True, blank=True)
+
+    Free = 1
+    Paid = 2
+    SUB_CHOICES = (
+        (Free, _('free')),
+        (Paid, _('paid')),
+    )
+    subscription_choices = models.PositiveSmallIntegerField(verbose_name=_("Subscription Choices"),
+                                                            choices=SUB_CHOICES,
+                                                            default=Free, blank=False, null=False, max_length=10)
+
+    created = models.DateTimeField(auto_now_add=True, default=timezone.now())
+    updated = models.DateTimeField(auto_now=True,default=timezone.now())
 
     def __unicode__(self):
         return self.app_user.first_name
@@ -80,7 +93,10 @@ class AppStudent(models.Model):
 
 
 class AppCoach(models.Model):
-    app_user = models.OneToOneField(AppUser, related_name='coach_user')
+    app_user = models.OneToOneField(AppUser, related_name='coach_user',primary_key=True)
+
+    created = models.DateTimeField(auto_now_add=True,default=timezone.now())
+    updated = models.DateTimeField(auto_now=True,default=timezone.now())
 
     def __unicode__(self):
         return self.app_user.first_name
@@ -112,24 +128,6 @@ class PasswordResetRequest(models.Model):
     hash = models.CharField(max_length=50)
     created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
-
-
-class UserSubscription(models.Model):
-    Free = 1
-    Paid = 2
-    SUB_CHOICES = (
-        (Free, _('free')),
-        (Paid, _('paid')),
-    )
-    subscription_choices = models.PositiveSmallIntegerField(verbose_name=_("Subscription Choices"),
-                                                            choices=SUB_CHOICES,
-                                                            default=Free, blank=False, null=False, max_length=10)
-
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __unicode__(self):
-        return unicode(self.subscription_choices)
 
 
 class ContactUs(models.Model):

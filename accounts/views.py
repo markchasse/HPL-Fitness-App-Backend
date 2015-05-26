@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 
 # import from app
 from accounts.forms import LoginForm
-from accounts.models import UserSubscription, AppStudent, User, PasswordResetRequest
+from accounts.models import AppStudent, User, PasswordResetRequest
 from accounts.serializers import UserSerializer
 
 # import from project
@@ -46,10 +46,10 @@ class Register(APIView):
 
             if serializer.data['user_role'] == 'user':
                 try:
-                    subscription = UserSubscription.objects.create()
-                    AppStudent.objects.create(subscription=subscription, app_user_id=serializer.data['id'])
+                    # subscription = UserSubscription.objects.create()
+                    AppStudent.objects.create(app_user_id=serializer.data['id'])
                 except Exception as ex:
-                    return Response({'success': False, 'detail': _('Subscription not created.')},
+                    return Response({'success': False, 'detail': _('Student not created.')},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 logger.debug('New subscription created for user %s. %s', serializer.data['email'], serializer.data['id'])
 
@@ -251,9 +251,9 @@ class AppleSubscription(APIView):
             user = self.request.user
             student = AppStudent.objects.get(app_user=user)
             student.apple_subscription_id = data['apple_subscription_id']
-            subscription = UserSubscription.objects.get(id=student.subscription_id)
-            subscription.subscription_choices = 2
-            subscription.save()
+            # subscription = UserSubscription.objects.get(id=student.subscription_id)
+            student.subscription_choices = 2
+            # subscription.save()
             student.save()
             return Response(SUCCESS_DICT,status=status.HTTP_200_OK)
         except Exception as ex:

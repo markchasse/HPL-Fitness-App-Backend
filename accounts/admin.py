@@ -1,6 +1,6 @@
 from django.contrib import admin
-from accounts.admin_forms import UserChangeForm, UserCreationForm
-from accounts.models import AppUser, AppCoach, AppStudent, ContactUs, UserSubscription, FitnessAppStudent
+from accounts.admin_forms import UserChangeForm, UserCreationForm, CoachCreationForm
+from accounts.models import AppUser, AppCoach, AppStudent, ContactUs, FitnessAppStudent, FitnessAppCoach
 
 from django import forms
 from django.contrib import admin
@@ -10,35 +10,6 @@ from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group
 
 User = get_user_model()
-
-class StudentInline(admin.StackedInline):
-    model = AppStudent
-    can_delete = False
-    verbose_name_plural = 'Student'
-
-class CoachInline(admin.StackedInline):
-    model = AppCoach
-    can_delete = False
-    verbose_name_plural = 'Coach'
-
-# class UserAdmin(admin.ModelAdmin):
-#     list_display = ('first_name', 'last_name', 'email', 'is_active','user_role',)
-#     fieldsets = (
-#         ('Fitness Application User', {
-#          'fields': ('first_name', 'last_name', 'email', 'password', 'is_active','user_role')}),
-#     )
-#     # inlines = [StudentInline,]
-
-# Define a new User admin
-# class StudentAdmin(FitnessAppUser):
-#     inlines = (StudentInline, )
-#
-# # Define a new User admin
-# class CoachAdmin(admin.ModelAdmin):
-#     inlines = (CoachInline, )
-
-# admin.site.register(FitnessAppUser, StudentAdmin)
-# admin.site.register(FitnessAppUser, CoachAdmin)
 
 admin.site.register(ContactUs)
 
@@ -76,6 +47,16 @@ class MyGroupAdmin(GroupAdmin):
 admin.site.unregister(Group)
 admin.site.register(Group, MyGroupAdmin)
 
+
+class StudentInline(admin.StackedInline):
+    model = AppStudent
+    readonly_fields = ('created','updated', )
+
+class CoachInline(admin.StackedInline):
+    model = AppCoach
+    readonly_fields = ('created','updated', )
+
+
 class StudentAdmin(UserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
@@ -99,6 +80,7 @@ class StudentAdmin(UserAdmin):
         #     'classes': ('wide',),
         #     'fields': ('subscription', 'parse_installation_id', 'apple_subscription_id')}),
     )
+    inlines = (StudentInline, )
     search_fields = ('email',)
     ordering = ('email',)
     filter_horizontal = ()
@@ -107,3 +89,36 @@ class StudentAdmin(UserAdmin):
         return super(StudentAdmin, self).get_queryset(request).filter(user_role=AppUser.User)
 
 admin.site.register(FitnessAppStudent, StudentAdmin)
+
+class CoachAdmin(UserAdmin):
+    form = UserChangeForm
+    add_form = CoachCreationForm
+
+    list_display = (
+        'email', 'first_name', 'last_name', 'user_role')
+    list_filter = ()
+    fieldsets = (
+        ('Student', {
+         'fields': ('email', 'first_name', 'last_name', 'password')}),
+        ('User Type', {'fields': ('user_role',)}),
+        ('Permissions', {'fields': ('is_active',)}),
+    )
+    add_fieldsets = (
+        ('Add Fitness App Student', {
+            'classes': ('wide',),
+            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2', 'is_active',
+                       'user_role')}
+         ),
+        # ('Student Subscription', {
+        #     'classes': ('wide',),
+        #     'fields': ('subscription', 'parse_installation_id', 'apple_subscription_id')}),
+    )
+    inlines = (CoachInline, )
+    search_fields = ('email',)
+    ordering = ('email',)
+    filter_horizontal = ()
+
+    def get_queryset(self, request):
+        return super(CoachAdmin, self).get_queryset(request).filter(user_role=AppUser.Coach)
+
+admin.site.register(FitnessAppCoach, CoachAdmin)
