@@ -251,9 +251,7 @@ class AppleSubscription(APIView):
             user = self.request.user
             student = AppStudent.objects.get(app_user=user)
             student.apple_subscription_id = data['apple_subscription_id']
-            # subscription = UserSubscription.objects.get(id=student.subscription_id)
             student.subscription_choices = 2
-            # subscription.save()
             student.save()
             return Response(SUCCESS_DICT,status=status.HTTP_200_OK)
         except Exception as ex:
@@ -267,7 +265,7 @@ class AppleSubscription(APIView):
                 logger.debug("Apple subscription id: %s", login_user.email)
                 return Response({'success': True, 'apple_subscription_id': student.apple_subscription_id},
                                 status=status.HTTP_200_OK) if student.apple_subscription_id else Response({'success': False,
-                               'message': 'You don not have parse subscription.'},status=status.HTTP_200_OK)
+                               'message': 'You don not have Apple subscription.'},status=status.HTTP_200_OK)
             except Exception as ex:
                 return Response({"message": "Error getting Apple subscription id", 'success':False}, status=status.HTTP_200_OK)
         else:

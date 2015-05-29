@@ -64,7 +64,6 @@ class AssignedWorkoutViewSet(ListAPIView):
             res.append(data)
             return Response(res, status=status.HTTP_200_OK)
 
-
         if not workout_data:
             #write query to get previous workout.
             current_workout_date = request.QUERY_PARAMS.get('workout_date', None)

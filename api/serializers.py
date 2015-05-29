@@ -26,7 +26,7 @@ class DefinedWorkoutSerializer(serializers.ModelSerializer):
     workout_type = serializers.SerializerMethodField('workout_choices_get')
     exercises = serializers.SerializerMethodField()
     coach = CoachSerializer(read_only=True)
-    # is_result_submit = serializers.SerializerMethodField()
+    is_result_submit = serializers.SerializerMethodField()
 
     class Meta:
         model = WorkoutDefinition
@@ -42,7 +42,7 @@ class DefinedWorkoutSerializer(serializers.ModelSerializer):
                                                       result_workout_assign_date__assigned_date__year=workout_date.year,
                                                       result_workout_assign_date__assigned_date__month=workout_date.month,
                                                       result_workout_assign_date__assigned_date__day=workout_date.day,
-                                                      result_workout_assign_date__assigned_workout__student=logged_in_student
+                                                      workout_user=logged_in_student
                                                       )
                 if result:
                     return True
