@@ -228,11 +228,16 @@ class WorkOutResultSerializer(serializers.ModelSerializer):
 
 class PersonalBestSerializer(serializers.ModelSerializer):
     workout_id = serializers.SerializerMethodField()
+    result_id = serializers.SerializerMethodField()
     workout_header = serializers.SerializerMethodField()
     workout_assigned_date = serializers.SerializerMethodField()
 
     def get_workout_id(self, obj):
         return obj.workout_assigned_date.assigned_workout.workout.id
+
+    def get_result_id(self, obj):
+        result = WorkoutResult.objects.filter(workout_user=obj.student,result_workout_assign_date=obj.workout_assigned_date)[0]
+        return result.id if result else None
 
     def get_workout_header(self, obj):
         return obj.workout_assigned_date.assigned_workout.workout.introduction_header
@@ -242,7 +247,7 @@ class PersonalBestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PersonalBest
-        fields = ('workout_assigned_date', 'workout_id', 'workout_header')
+        fields = ('workout_assigned_date', 'result_id','workout_id', 'workout_header')
 
 
 class LeaderBoardResultSerializer(serializers.ModelSerializer):
