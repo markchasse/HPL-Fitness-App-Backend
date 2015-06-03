@@ -11,6 +11,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.utils import timezone
 
 # import from app
 from accounts.forms import LoginForm
@@ -251,6 +252,7 @@ class AppleSubscription(APIView):
             user = self.request.user
             student = AppStudent.objects.get(app_user=user)
             student.apple_subscription_id = data['apple_subscription_id']
+            student.apple_subscription_created_date = timezone.now()
             student.subscription_choices = 2
             student.save()
             return Response(SUCCESS_DICT,status=status.HTTP_200_OK)
@@ -263,7 +265,8 @@ class AppleSubscription(APIView):
             try:
                 student = AppStudent.objects.get(app_user=login_user)
                 logger.debug("Apple subscription id: %s", login_user.email)
-                return Response({'success': True, 'apple_subscription_id': student.apple_subscription_id},
+                return Response({'success': True, 'apple_subscription_id': student.apple_subscription_id,
+                                 'apple_subscription_created_date': student.apple_subscription_created_date},
                                 status=status.HTTP_200_OK) if student.apple_subscription_id else Response({'success': False,
                                'message': 'You don not have Apple subscription.'},status=status.HTTP_200_OK)
             except Exception as ex:

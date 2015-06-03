@@ -82,6 +82,7 @@ class AppStudent(models.Model):
                                                             choices=SUB_CHOICES,
                                                             default=Free, blank=False, null=False, max_length=10)
 
+    apple_subscription_created_date = models.DateTimeField(null=True,blank=True,default=None)
     created = models.DateTimeField(auto_now_add=True, default=timezone.now())
     updated = models.DateTimeField(auto_now=True,default=timezone.now())
 
