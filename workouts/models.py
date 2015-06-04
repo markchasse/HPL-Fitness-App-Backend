@@ -148,7 +148,7 @@ class WorkoutResult(models.Model):
 class PersonalBest(models.Model):
     student = models.ForeignKey(AppStudent, related_name='student_personal_best', null=False)
     workout_assigned_date = models.ForeignKey(AssignedWorkoutDate, related_name="assigned_date_personal_best",
-                                              blank=False, null=False, unique=True)
+                                              blank=False, null=False)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
