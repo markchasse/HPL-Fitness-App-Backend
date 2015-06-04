@@ -16,46 +16,6 @@ class WorkoutDefinitionForm(forms.ModelForm):
     class Meta:
         model = WorkoutDefinition
 
-
-# class WorkoutAdmin(admin.ModelAdmin):
-#     list_display = ('introduction_header', 'introduction_textfield', 'warmup_header', 'warmup_content',
-#                     'warmup_notes', 'substitution_header', 'substitution_content', 'substitution_notes',
-#                     'cooldown_header', 'cooldown_content', 'cooldown_notes', 'extracredit_header',
-#                     'extracredit_content', 'extracredit_notes', 'homework_header', 'homework_content',
-#                     'homework_notes', 'coach')
-#     list_filter = ('coach',)
-#
-#     fieldsets = (
-#         ('Workout Definitions',
-#          {
-#          'fields': ('introduction_header', 'introduction_textfield', 'warmup_header', 'warmup_content',
-#                     'warmup_notes', 'substitution_header', 'substitution_content', 'substitution_notes',
-#                     'cooldown_header', 'cooldown_content', 'cooldown_notes', 'extracredit_header',
-#                     'extracredit_content', 'extracredit_notes', 'homework_header', 'homework_content',
-#                     'homework_notes', 'coach')
-#         }),
-#     )
-#
-#
-# class ExerciseTypesAdmin(admin.ModelAdmin):
-#     list_display = ('name', 'description')
-#     fieldsets = (
-#         ('Workout Types', {
-#          'fields': ('name', 'description')}),
-#     )
-#
-# class ExceriseAdmin(admin.ModelAdmin):
-#     list_display = ('workout_header', 'workout', 'workout_content', 'workout_notes', 'workout_type')
-#     fieldsets = (
-#         ('Excersie', {
-#          'fields': ('workout_header','workout', 'workout_content', 'workout_notes','workout_type')}),
-#     )
-#
-#
-#
-# class ExerciseResultAdmin(admin.ModelAdmin):
-#     list_display = ('time', 'rounds', 'assigned_workout', 'note')
-
 class AssignedWokoutDateInline(admin.StackedInline):
     model = AssignedWorkoutDate
     extra = 1
@@ -89,7 +49,11 @@ class WorkoutDefinitionAdmin(admin.ModelAdmin):
     form = WorkoutDefinitionForm
 
     list_display = ('workout_nick_name', 'introduction_header', 'workout_header',
-                    'get_workout_content','coach_name','workout_type','get_groups','get_exercises','created',)
+                    'get_workout_content','coach_name','get_workout_type','get_groups','get_exercises','created',)
+
+    def get_workout_type(self,obj):
+        return obj.workout_type
+    get_workout_type.short_description = 'Workout Type'
 
     def get_workout_content(self,obj):
         return obj.workout_content
@@ -114,7 +78,8 @@ admin.site.register(WorkoutDefinition,WorkoutDefinitionAdmin)
 
 
 class WorkoutResultAdmin(admin.ModelAdmin):
-    list_display = ('workout_name','student_name','time_taken', 'rounds', 'result_submit_date', 'note','result_workout_assign_date',)
+    # list_display = ('workout_name','student_name','time_taken', 'rounds', 'result_submit_date', 'note','result_workout_assign_date',)
+    list_display = ('workout_name','student_name','time_taken', 'rounds','result_submit_date', 'note','get_result_workout_assign_date',)
 
     def workout_name(self,obj):
         return obj.result_workout_assign_date.assigned_workout.workout.workout_nick_name
@@ -123,6 +88,10 @@ class WorkoutResultAdmin(admin.ModelAdmin):
     def student_name(self,obj):
         return obj.workout_user.get_full_name()
     student_name.short_description = 'Student Name'
+
+    def get_result_workout_assign_date(self,obj):
+        return obj.result_workout_assign_date
+    get_result_workout_assign_date.short_description = 'Assigned Date'
 
 admin.site.register(WorkoutResult,WorkoutResultAdmin)
 
