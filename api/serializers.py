@@ -56,6 +56,7 @@ class DefinedWorkoutSerializer(serializers.ModelSerializer):
             for exercise in obj.exercises.all():
                 exercise_dict = {}
                 exercise_dict['exercise_content'] = exercise.exercise_content
+                exercise_dict['exercise_url'] = exercise.exercise_url
                 exercises.append(exercise_dict)
 
             return exercises
