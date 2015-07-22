@@ -1,9 +1,10 @@
 from django.conf.urls import patterns, url
+from django.views.decorators.csrf import csrf_exempt
 from accounts.views import Register, TokenLogin,DeleteAccount,ChangePassword,ForgetPasswordEmail,\
     ResetPassword, AccountInformation, ParseInstallation, AppleSubscription
 
 urlpatterns = patterns('',
-    url(r'^register/$', Register.as_view(), name='register_user'),
+    url(r'^register/$', csrf_exempt(Register.as_view()), name='register_user'),
     url(r'^login/$', TokenLogin.as_view(), name='token_login'),
     url(r'^account_information$', AccountInformation.as_view(), name='account_information'),
     url(r'^password/change/$', ChangePassword.as_view(), name='change-password'),
