@@ -1,0 +1,60 @@
+<ion-view view-title="{{ vm.title }}" hide-back-button="true">
+	<ion-content class="padding">
+		<div>
+			<!-- use ng-submit to catch the form submission and use our Angular function -->
+			<h5 class="dark animated bounceInRight">
+				Please subscribe to a plan.
+			</h5>
+
+			<form id="subscriptionForm" class="animated bounceInUp" name="subscriptionForm" ng-submit="vm.register(subscriptionForm)" method="post" novalidate>
+				<!-- our nested state views will be injected here -->
+				<h5 class="assertive">{{ vm.message }}</h5>
+
+				<label class="item item-input item-select" required>
+					<div class="input-label">
+						Plan
+					</div>
+					<select data-stripe="plan" ng-model="vm.subscribe_data['plan']">
+						<option value="Basic" selected>Basic</option>
+						<option value="Premium">Premium</option>
+					</select>
+				</label>
+				<div ng-show="subscriptionForm.plan.$invalid && !subscriptionForm.plan.$pristine">
+					<h5 class="assertive">Plan is required.</h5>
+				</div>
+				
+				<label class="item item-input">
+					<input type="text" data-stripe="number" placeholder="Card Number (Required)" ng-model="vm.subscribe_data['number']" required />
+				</label>
+				<div ng-show="subscriptionForm.number.$invalid && !subscriptionForm.number.$pristine">
+					<h5 class="assertive">Card Number is required.</h5>
+				</div>
+
+				<label class="item item-input">
+					<input type="text" data-stripe="exp_month" placeholder="Exp Month (Required)" ng-model="vm.subscribe_data['exp_month']" required />
+				</label>
+				<div ng-show="subscriptionForm.exp_month.$invalid && !subscriptionForm.exp_month.$pristine">
+					<h5 class="assertive">Exp Month is required.</h5>
+				</div>
+
+				<label class="item item-input">
+					<input type="text" data-stripe="exp_year" placeholder="Exp Year (Required)" ng-model="vm.subscribe_data['exp_year']" required/>
+				</label>
+				<div ng-show="subscriptionForm.exp_year.$invalid && !subscriptionForm.exp_year.$pristine">
+					<h5 class="assertive">Exp Year is required.</h5>
+				</div>
+
+				<label class="item item-input">
+					<input type="text" data-stripe="cvc" placeholder="Card cvc (Required)" ng-model="vm.subscribe_data['cvc']" required />
+				</label>
+				<div ng-show="subscriptionForm.cvc.$invalid && !subscriptionForm.cvc.$pristine">
+					<h5 class="assertive">Card cvc is required.</h5>
+				</div>
+
+				<button ng-disabled="subscriptionForm.$invalid" type="submit" class="button button-block icon-right ion-chevron-right theme-btn">
+					Subscribe
+				</button>
+			</form>
+		</div>
+	</ion-content>
+</ion-view>

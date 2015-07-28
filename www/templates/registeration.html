@@ -1,0 +1,53 @@
+<ion-view view-title="{{ vm.title }}" hide-back-button="true">
+	<ion-content class="padding">
+		<div>
+			<!-- use ng-submit to catch the form submission and use our Angular function -->
+			<h5 class="dark animated bounceInRight">
+				Please take few minutes to tell us about yourself.
+			</h5>
+
+			<form id="signupForm" class="animated bounceInUp" name="signupForm" ng-submit="vm.register(signupForm)" novalidate>
+				<!-- our nested state views will be injected here -->
+				<h5 class="assertive">{{ vm.message }}</h5>
+				<label class="item item-input">
+					<input type="text" name="firstName" placeholder="First Name (Required)" ng-model="vm.student['first_name']" required />
+				</label>
+				<div ng-show="signupForm.firstName.$invalid && !signupForm.firstName.$pristine">
+					<h5 class="assertive">First Name is required.</h5>
+				</div>
+
+				<label class="item item-input">
+					<input type="text" name="lastName" placeholder="Last Name (Required)" ng-model="vm.student['last_name']" required />
+				</label>
+				<div ng-show="signupForm.lastName.$invalid && !signupForm.lastName.$pristine">
+					<h5 class="assertive">Last Name is required.</h5>
+				</div>
+
+				<label class="item item-input">
+					<input type="email" name="email" placeholder="Email (Required)" ng-model="vm.student['email']" required/>
+				</label>
+				<div ng-show="signupForm.email.$invalid && !signupForm.email.$pristine">
+					<h5 class="assertive">Enter a valid email.</h5>
+				</div>
+
+				<label class="item item-input">
+					<input type="password" name="password" placeholder="Password (Required)" ng-model="vm.student['password']" required />
+				</label>
+				<div ng-show="signupForm.password.$invalid && !signupForm.password.$pristine">
+					<h5 class="assertive">Password is required.</h5>
+				</div>
+
+				<label class="item item-input">
+					<input type="password" name="confirmPassword" placeholder="Same Password" ng-model="vm.student['confirmPassword']"  validate-equals="vm.student['password']"/>
+				</label>
+				<div ng-show="signupForm.confirmPassword.$dirty && signupForm.confirmPassword.$invalid">
+					<h5 class="assertive animated bounce">Password miss Match.</h5>
+				</div>
+
+				<button ng-disabled="signupForm.$invalid" type="submit" class="button button-block icon-right ion-chevron-right theme-btn">
+					Continue to Subscription
+				</button>
+			</form>
+		</div>
+	</ion-content>
+</ion-view>
